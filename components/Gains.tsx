@@ -101,6 +101,15 @@ export default function Gains({ lang }: { lang: Lang }) {
         if (!track) return;
         track.style.height = `${GAINS.length * 58}vh`;
 
+        // setFlat(false) has not reached the DOM yet, so the track still
+        // matches `.gains--flat`, whose `height:auto !important` outranks the
+        // inline height just written. Measuring now would cache a track barely
+        // taller than the viewport: progress would finish within the first
+        // screen and the highlight would jump to the last row and freeze,
+        // while sticky went on holding the section for the real distance.
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+        if (cancelled) return;
+
         ctx = gsap.context(() => {
           ScrollTrigger.create({
             trigger: track,
