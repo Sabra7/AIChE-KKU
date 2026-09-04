@@ -10,6 +10,28 @@
    card reveal, the molecular hero field. Writing those as utility strings
    would have made them unreadable, so they live here as named classes and
    tailwind.config.ts mirrors the tokens for utility use.
+
+   CONTENTS  —  in file order. Each heading below is a banner comment you can
+   search for verbatim.
+
+     DESIGN TOKENS ........ :root variables, element resets, .shell, .skip
+     SECTION ENTRANCE ..... .reveal + delay steps
+     TILT ................. [data-tilt]
+     HEADER ............... .hdr, .brand, .ico, .nav, .langbtn, .burger
+     HERO ................. .hero and its field, glow, title, cue
+     BUTTONS .............. .btn and its fill, icon, chevron, ripple
+     SWAPPING LABEL ....... .swap
+     SECTION FURNITURE .... .sect, .sect__head, .joint
+     ABOUT ................ .story, .beats, .beat
+     TARGETS .............. .figs, .fig, .cnt
+     GAINS ................ .gains, .gainlist, .gain  (the pinned section)
+     PROGRAMME ............ .wshops, .wshop
+     TIMELINE ............. .tl
+     GALLERY .............. .gal
+     TEAM ................. .sup, .grp, .team, .card
+     JOIN ................. .join, .social
+     FOOTER ............... .ftr
+     REDUCED MOTION ....... the opt-out block; keep it last
    --------------------------------------------------------------------------- */
 
 @layer base {
