@@ -134,7 +134,8 @@ export default function Hero({ lang }: { lang: Lang }) {
         <Reveal delay={1} className="hero__title">
           <h1>
             {headline[lang].map((word, i) => (
-              // eslint-disable-next-line react/no-array-index-key
+              // The index is a safe key here: the headline is a fixed literal
+              // above, never reordered, filtered or appended to at runtime.
               <span className="w" key={i} style={{ ['--i' as string]: i }}>
                 <i>{word}</i>
               </span>
