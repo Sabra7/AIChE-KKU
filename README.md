@@ -1,5 +1,51 @@
 # AIChE-KKU
 
+A fully bilingual site for the AIChE student chapter at King Khalid University,
+Abha — Arabic and English as two separately rendered static trees, not a
+runtime string swap.
+
+<!-- LIVE SITE: replace with the production URL once the domain is live -->
+<!-- SCREENSHOT 1 (Arabic home, /):  ![Arabic home](docs/screenshot-ar.png) -->
+<!-- SCREENSHOT 2 (English home, /en):  ![English home](docs/screenshot-en.png) -->
+
+## Built with
+
+| Tool | Role |
+| --- | --- |
+| Next.js 15 | App Router, static generation, two route groups |
+| React 19 | Server Components by default; client only where motion needs it |
+| TypeScript | Content in `data/` is typed, so a malformed entry fails the build |
+| GSAP | ScrollTrigger, loaded on demand by the one section that needs it |
+| next/font | Space Grotesk and IBM Plex Sans Arabic, self-hosted at build time |
+
+## Design decisions
+
+**Two route groups instead of one `[lang]` segment.** A single dynamic segment
+would mean deciding the language inside the render, which leaves `<html lang>`
+and `<html dir>` to be corrected after first paint — an RTL page visibly
+flipping direction as it loads. `app/(ar)` and `app/(en)` each own a root
+layout that hands `Shell` a fixed `lang`, so the direction is already correct
+in the served HTML and each language is a real indexable URL.
+
+**The skills section is pinned with `position: sticky`, not GSAP's pin.**
+GSAP's pin injects measured heights into the layout, and any viewport resize
+while the section is pinned makes it slip out of place. Sticky lets the browser
+recompute for itself; ScrollTrigger is left with a single job — reading scroll
+progress — which cannot desync anything. If GSAP fails to load, the viewport is
+narrow, or reduced motion is requested, the section renders as a plain list
+with identical content.
+
+**One `requestAnimationFrame` loop drives every pointer-following effect.**
+`components/PointerMotion.tsx` owns the hero's three parallax depth layers, the
+accent glow and the gallery drift in a single loop. A listener and a loop per
+component would mean several layout reads per frame and elements that visibly
+drift out of sync with each other. Effects that need *element-relative*
+coordinates instead — card tilt, button fill origin, tap ripples — stay on
+per-element listeners, because they only need to run while the pointer is
+actually on that element.
+
+---
+
 Front-end only. No database, no API routes, no admin panel, no environment
 variables. All content lives in TypeScript files under `data/`, all images in
 `public/`, and the site builds to static pages.
@@ -166,3 +212,6 @@ Search the codebase for `TODO` to find these in place.
 ---
 
 Designed and developed by [Mohammed Sabrah](https://github.com/Sabra7).
+
+Code is [MIT licensed](LICENSE). The site copy, the team and event photographs,
+and the AIChE name and logo are not — they belong to their respective owners.
