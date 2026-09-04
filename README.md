@@ -199,8 +199,6 @@ Search the codebase for `TODO` to find these in place.
 
 - Dr. Hussein's exact academic rank and the confirmed English spelling of his
   surname — `data/team.ts`
-- A portrait for Tasneem Alsharif; the supplied photo was a wide podium shot
-  that could not be cropped to 3:4 — `data/team.ts`
 - A higher-resolution original for Ayman Asiri; the current file is 513×488,
   below the minimum and visibly soft on desktop — `data/team.ts`
 - English bios for Firas, Tasneem, Anas and Abdulmalik were drafted from the

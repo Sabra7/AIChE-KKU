@@ -91,9 +91,7 @@ export const leadership: Member[] = [
     // TODO review: English drafted from the Arabic, not author-supplied.
     bioEn:
       'An ambitious industrial engineer working to create real value in every experience. I believe leadership begins with initiative and that continuous learning is the basis of growth. I have led programmes, camps and varied initiatives that sharpened my leadership and organisational skills, and I work to turn ideas into tangible results and lasting impact.',
-    // TODO: awaiting a portrait. The photo supplied was a wide podium shot
-    // that cannot be cropped to 3:4 alongside the other headshots.
-    photo: null,
+    photo: '/team/tasneem.jpg',
     links: { linkedin: 'https://www.linkedin.com/in/tasneem-alshareef-b62132380' },
   },
   {
