@@ -865,7 +865,13 @@ html[lang="en"] .hero h1{ max-width:15ch; }
   gap:clamp(1.2rem,3vw,2.2rem);
   max-width:820px; margin-inline:auto;
 }
-.prt__item{ text-align:center; }
+/* Cap the card rather than the grid: with only two partners an uncapped
+   1fr column stretches to ~390px and the logo floats in a mostly empty pill.
+   The cap binds now and simply stops applying once the columns get narrower. */
+/* width:100% before the cap is load-bearing: auto inline margins turn a grid
+   item into shrink-to-fit, and the logo is absolutely positioned so it lends
+   the box no intrinsic width to shrink to. */
+.prt__item{ text-align:center; width:100%; max-width:280px; margin-inline:auto; }
 
 /* Fixed height + contain is what lets logos of different proportions sit on
    one visual line without any of them being cropped or stretched.

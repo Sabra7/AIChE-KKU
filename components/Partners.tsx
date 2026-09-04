@@ -32,7 +32,7 @@ export default function Partners({ lang }: { lang: Lang }) {
             return (
               <article className="prt__item" key={p.id}>
                 <div className="prt__logo">
-                  <Image src={p.logo} alt={name} fill sizes="(max-width:700px) 45vw, 220px" />
+                  <Image src={p.logo} alt={name} fill sizes="280px" />
                 </div>
                 <p className="prt__name">{name}</p>
               </article>
