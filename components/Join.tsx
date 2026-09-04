@@ -15,11 +15,10 @@ export default function Join({ lang }: { lang: Lang }) {
         {/* The molecular joint motif, one last time. */}
         <Reveal>
           <svg
-            className="joint"
+            className="joint joint--center"
             viewBox="0 0 600 26"
             preserveAspectRatio="none"
             aria-hidden="true"
-            style={{ maxWidth: 280, marginInline: 'auto', marginBottom: '2.5rem' }}
           >
             <line x1="10" y1="13" x2="290" y2="13" pathLength={1} />
             <line x1="310" y1="13" x2="590" y2="13" pathLength={1} />

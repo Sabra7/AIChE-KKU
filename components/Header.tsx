@@ -67,7 +67,7 @@ export default function Header({ lang }: { lang: Lang }) {
             priority
           />
           <span className="brand__txt">
-            AIChE<span style={{ color: 'var(--ink-2)' }}>·</span>KKU
+            AIChE<span className="brand__dot">·</span>KKU
           </span>
         </Link>
 

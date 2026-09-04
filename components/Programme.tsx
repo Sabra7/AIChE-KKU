@@ -77,7 +77,7 @@ export default function Programme({ lang }: { lang: Lang }) {
         </Reveal>
 
         {hasMore && (
-          <div style={{ marginTop: '1.6rem' }}>
+          <div className="wshops__more">
             <button
               type="button"
               className="btn btn--ghost"

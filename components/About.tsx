@@ -69,7 +69,7 @@ export default function About({ lang }: { lang: Lang }) {
           </p>
         </Reveal>
 
-        <ol className="beats" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        <ol className="beats">
           {beats.map((b) => (
             <Reveal as="li" key={b.id} className="beat">
               <h3>

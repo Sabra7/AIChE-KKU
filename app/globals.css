@@ -176,6 +176,8 @@ a{ color:inherit; }
 .brand svg{ flex:none; }
 .brand__mark{ flex:none; height:34px; width:auto; display:block; }
 .brand__txt{ font-family:var(--font-en); font-size:1.06rem; letter-spacing:-.02em; }
+/* The separator is dimmed so "AIChE" and "KKU" read as two names, not one word. */
+.brand__dot{ color:var(--ink-2); }
 
 /* Hand-drawn chemistry icon set. Stroke inherits currentColor so one sprite
    serves the light sections and the dark GAINS section alike. */
@@ -496,6 +498,10 @@ html[lang="en"] .hero h1{ max-width:15ch; }
 .reveal.in .joint line{ stroke-dashoffset:0; }
 .reveal.in .joint circle{ scale:1; }
 
+/* Centred variant, used where the joint opens a section rather than closing
+   one. Capped well below the shell so it reads as a mark, not a divider. */
+.joint--center{ max-width:280px; margin-inline:auto; margin-bottom:2.5rem; }
+
 /* ===========================================================================
    ABOUT  —  sticky storytelling
    =========================================================================== */
@@ -504,7 +510,12 @@ html[lang="en"] .hero h1{ max-width:15ch; }
 .story__stick h2{ font-size:var(--t-2xl); margin-bottom:1.2rem; }
 .story__stick p{ color:var(--ink-2); }
 
-.beats{ display:flex; flex-direction:column; gap:clamp(2.5rem,6vw,4.5rem); }
+/* It is an <ol> for semantics — the beats are chronological — but the numbers
+   are carried by the dotted rail in ::before/::after, so the markers go. */
+.beats{
+  display:flex; flex-direction:column; gap:clamp(2.5rem,6vw,4.5rem);
+  list-style:none; margin:0; padding:0;
+}
 .beat{ position:relative; padding-inline-start:2.2rem; }
 .beat::before{
   content:''; position:absolute; inset-block:.55rem 0; inset-inline-start:5px;
@@ -568,6 +579,9 @@ html[lang="en"] .hero h1{ max-width:15ch; }
    GAINS  —  the pinned scroll section (most important section in the site)
    =========================================================================== */
 .gains{ background:var(--ink); color:var(--bg); }
+/* Tighter than the global section head: the stage is one viewport tall and the
+   head shares it with six rows, so the standard gap would push them off. */
+.gains .sect__head{ margin-bottom:2.2rem; }
 /* Smaller than a normal section head: this one shares the pinned stage with
    six rows, so it cannot take the full --t-2xl without crowding them. */
 .gains .sect__head h2{ color:var(--bg); font-size:clamp(1.4rem,3.4vw,2.2rem); }
@@ -671,6 +685,9 @@ html[lang="en"] .hero h1{ max-width:15ch; }
 .wshop h3{ font-size:var(--t-lg); }
 .wshop__meta{ font-size:var(--t-sm); color:var(--ink-2); margin-top:auto; }
 .wshop--todo{ background:transparent; border:1px dashed var(--rule-strong); align-items:center; justify-content:center; text-align:center; color:var(--ink-2); }
+
+/* Holds the show-all toggle off the grid it expands. */
+.wshops__more{ margin-top:1.6rem; }
 
 /* ===========================================================================
    TIMELINE

@@ -134,7 +134,7 @@ export default function Gains({ lang }: { lang: Lang }) {
       <div className="gains__track" ref={trackRef}>
         <div className="gains__pin">
           <div className="shell gains__stage">
-            <div className="sect__head" style={{ marginBottom: '2.2rem' }}>
+            <div className="sect__head">
               {/* Both the text and the face follow the page language. The face is
                   inherited from <body>, which already switches on html[lang], so
                   pinning font-family here would force Latin onto Arabic. */}
