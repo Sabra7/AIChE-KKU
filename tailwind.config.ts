@@ -1,10 +1,26 @@
 import type { Config } from 'tailwindcss';
 
 /**
- * The brand palette and type scale live here so utilities stay in sync with
- * the CSS custom properties declared in app/globals.css. Change a value in
- * one place only: globals.css owns the runtime variables, this file mirrors
- * them for Tailwind's autocomplete and utility generation.
+ * Why Tailwind is installed when no utility class is used anywhere.
+ *
+ * Every style in this project is handwritten in app/globals.css — a search of
+ * app/, components/, lib/ and data/ turns up no Tailwind utility at all. What
+ * the dependency still earns its place for is `@tailwind base`, the first line
+ * of globals.css: it injects Preflight, and the handwritten CSS is authored on
+ * top of that reset rather than duplicating it. Preflight is what supplies
+ * border-box sizing everywhere, zeroed default margins, `display:block` on
+ * images, and font inheritance into buttons and form controls. Remove the
+ * package without writing a replacement reset first and the layout shifts in
+ * places that are easy to miss.
+ *
+ * `@tailwind components` and `@tailwind utilities` currently emit nothing, and
+ * the whole of globals.css sits inside `@layer base`, so the cascade is flat.
+ *
+ * The theme below therefore does no work at build time. It is kept as the
+ * written record of the design system: the same tokens globals.css declares as
+ * CSS custom properties, in the form Tailwind would need if utilities are ever
+ * adopted. globals.css owns the runtime values — change one there and mirror
+ * it here, never the reverse.
  */
 const config: Config = {
   content: [
