@@ -22,9 +22,12 @@ export interface Partner {
   logo: string;    // path under /partners
 }
 
-// TODO: the names below are confirmed, the logo files are not in the repo yet.
-// Both `logo` paths point at where the files are expected to land, so the
-// images render broken until they are dropped into /public/partners.
+// TODO: both logo files are stand-ins traced out of the screenshots the
+// chapter supplied — a photographed shop box and a low-resolution social post.
+// They were reduced to a single --ink silhouette because neither source
+// carries real brand colour: MAF's was a white knockout on navy, Bred's was
+// ink on a lit carton. Ask each partner for their official file and replace
+// them; nothing else needs changing when you do.
 export const partners: Partner[] = [
   {
     id: 'madar-alfalak',
