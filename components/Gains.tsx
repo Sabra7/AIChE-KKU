@@ -30,6 +30,11 @@ interface Gain {
   descEn: string;
 }
 
+type GsapMods = {
+  gsap: (typeof import('gsap'))['gsap'];
+  ScrollTrigger: (typeof import('gsap/ScrollTrigger'))['ScrollTrigger'];
+};
+
 const GAINS: Gain[] = [
   {
     word: 'LEAD',
@@ -73,17 +78,15 @@ export default function Gains({ lang }: { lang: Lang }) {
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLElement>(null);
+  const gsapRef = useRef<GsapMods | null>(null);
   const [flat, setFlat] = useState(true); // safe default: readable list
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // Decide whether this visitor gets the pin at all, and load GSAP if so.
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced || window.innerWidth < 768) {
-      setFlat(true);
-      return;
-    }
+    if (reduced || window.innerWidth < 768) return;
 
-    let ctx: { revert: () => void } | null = null;
     let cancelled = false;
 
     (async () => {
@@ -95,44 +98,53 @@ export default function Gains({ lang }: { lang: Lang }) {
         if (cancelled) return;
 
         gsap.registerPlugin(ScrollTrigger);
+        gsapRef.current = { gsap, ScrollTrigger };
         setFlat(false);
-
-        const track = trackRef.current;
-        if (!track) return;
-        track.style.height = `${GAINS.length * 58}vh`;
-
-        // setFlat(false) has not reached the DOM yet, so the track still
-        // matches `.gains--flat`, whose `height:auto !important` outranks the
-        // inline height just written. Measuring now would cache a track barely
-        // taller than the viewport: progress would finish within the first
-        // screen and the highlight would jump to the last row and freeze,
-        // while sticky went on holding the section for the real distance.
-        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-        if (cancelled) return;
-
-        ctx = gsap.context(() => {
-          ScrollTrigger.create({
-            trigger: track,
-            start: 'top top',
-            end: 'bottom bottom',
-            onUpdate: (self) => {
-              const p = self.progress;
-              if (barRef.current) barRef.current.style.transform = `scaleX(${p})`;
-              setActiveIndex(Math.min(GAINS.length - 1, Math.floor(p * GAINS.length)));
-            },
-          });
-        }, sectionRef.current ?? undefined);
       } catch {
-        // Offline, blocked CDN, whatever — fall back to the list.
-        if (!cancelled) setFlat(true);
+        // Offline, blocked CDN, whatever — the flat list stays.
       }
     })();
 
     return () => {
       cancelled = true;
-      ctx?.revert();
     };
   }, []);
+
+  /**
+   * Measuring lives in its own effect, keyed on `flat`, and that key is the
+   * whole point: while the section is still flat, `.gains--flat .gains__track`
+   * forces `height:auto !important`, which outranks any inline height. Measure
+   * before React has committed `flat === false` and ScrollTrigger caches a
+   * track roughly as tall as the viewport — progress then runs out in the first
+   * screen, the highlight jumps to the last row and freezes, and sticky carries
+   * on holding the section for the real distance. An effect on [flat] runs
+   * after that commit, so what it measures is what the visitor scrolls through.
+   */
+  useEffect(() => {
+    if (flat) return;
+
+    const mods = gsapRef.current;
+    const track = trackRef.current;
+    if (!mods || !track) return;
+
+    // Track height is what decides how long the pin lasts.
+    track.style.height = `${GAINS.length * 58}vh`;
+
+    const ctx = mods.gsap.context(() => {
+      mods.ScrollTrigger.create({
+        trigger: track,
+        start: 'top top',
+        end: 'bottom bottom',
+        onUpdate: (self) => {
+          const p = self.progress;
+          if (barRef.current) barRef.current.style.transform = `scaleX(${p})`;
+          setActiveIndex(Math.min(GAINS.length - 1, Math.floor(p * GAINS.length)));
+        },
+      });
+    }, sectionRef.current ?? undefined);
+
+    return () => ctx.revert();
+  }, [flat]);
 
   return (
     <section
