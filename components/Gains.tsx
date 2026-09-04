@@ -135,8 +135,11 @@ export default function Gains({ lang }: { lang: Lang }) {
         <div className="gains__pin">
           <div className="shell gains__stage">
             <div className="sect__head" style={{ marginBottom: '2.2rem' }}>
-              <h2 style={{ fontFamily: 'var(--font-en)', fontSize: 'clamp(1.4rem,3.4vw,2.2rem)' }}>
-                More than a student organization.
+              {/* Both the text and the face follow the page language. The face is
+                  inherited from <body>, which already switches on html[lang], so
+                  pinning font-family here would force Latin onto Arabic. */}
+              <h2>
+                {pick(lang, 'أكثر من مجرّد فرع طلابي.', 'More than a student organization.')}
               </h2>
               <p>
                 {pick(

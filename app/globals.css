@@ -132,30 +132,6 @@ a{ color:inherit; }
 [data-tilt].tilting{ transition:transform .1s linear; }
 
 /* ===========================================================================
-   CURSOR RING  —  created by PointerMotion, and only on a fine pointer, so it
-   never exists in the markup for a visitor who cannot use it. The native
-   cursor is deliberately left visible; this is an accent, not a replacement.
-   =========================================================================== */
-.ring{
-  position:fixed; left:0; top:0; z-index:9999;
-  inline-size:34px; block-size:34px; margin:-17px 0 0 -17px;
-  border:1px solid var(--rule-strong); border-radius:50%;
-  pointer-events:none; opacity:0;
-  transition:opacity .3s var(--ease),
-             scale .35s var(--ease),
-             border-color .35s var(--ease),
-             background-color .35s var(--ease);
-  will-change:transform;
-}
-.ring--on{ opacity:1; }
-.ring--hot{
-  scale:1.75;
-  border-color:var(--accent);
-  background-color:rgba(139,203,50,.1);
-}
-@media (hover:none),(prefers-reduced-motion:reduce){ .ring{ display:none; } }
-
-/* ===========================================================================
    HEADER
    =========================================================================== */
 .hdr{
@@ -570,7 +546,9 @@ html[lang="en"] .hero h1{ max-width:15ch; }
    GAINS  —  the pinned scroll section (most important section in the site)
    =========================================================================== */
 .gains{ background:var(--ink); color:var(--bg); }
-.gains .sect__head h2{ color:var(--bg); }
+/* Smaller than a normal section head: this one shares the pinned stage with
+   six rows, so it cannot take the full --t-2xl without crowding them. */
+.gains .sect__head h2{ color:var(--bg); font-size:clamp(1.4rem,3.4vw,2.2rem); }
 .gains .sect__head p{ color:rgba(245,241,238,.72); }
 
 /* Track height drives how long the pin lasts. sticky does the pinning;
@@ -887,7 +865,6 @@ html[lang="en"] .hero h1{ max-width:15ch; }
   .gal img{ transform:none !important; }
   [data-magnet]{ transform:none !important; }
   [data-tilt]{ transform:none !important; }
-  .ring{ display:none !important; }
 
   /* Every masked/drawn element has to be handed its finished state, or it
      stays hidden forever once its animation is suppressed. */

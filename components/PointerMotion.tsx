@@ -14,8 +14,7 @@ import { useEffect } from 'react';
  *   - the hero field, in three depth layers ([data-depth]) so the motif has
  *     parallax rather than sliding as one flat sheet;
  *   - a soft accent glow that trails the pointer across the hero;
- *   - the gallery images ([data-pointer-drift]);
- *   - the trailing cursor ring (fine pointers only).
+ *   - the gallery images ([data-pointer-drift]).
  *
  * Everything that reacts to a *local* pointer position instead — card tilt,
  * the fill origin on a button, tap ripples — is wired below the loop with
@@ -27,8 +26,6 @@ import { useEffect } from 'react';
 
 /** Global drift easing. 0.075/frame is what makes it read as drift, not twitch. */
 const EASE = 0.075;
-/** The ring must feel attached to the pointer, so it eases much faster. */
-const RING_EASE = 0.2;
 
 const reduced = () =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -54,18 +51,7 @@ export default function PointerMotion() {
       document.querySelectorAll<HTMLElement>('[data-pointer-drift]'),
     );
 
-    // The ring is created here rather than rendered, so it never exists in the
-    // markup for a visitor who will never see it (touch, or reduced motion).
-    let ring: HTMLElement | null = null;
-    if (finePointer() && window.innerWidth >= 900) {
-      ring = document.createElement('div');
-      ring.className = 'ring';
-      ring.setAttribute('aria-hidden', 'true');
-      document.body.appendChild(ring);
-      cleanups.push(() => ring?.remove());
-    }
-
-    if (field || galleryImages.length > 0 || ring) {
+    if (field || galleryImages.length > 0) {
       let targetX = 0;
       let targetY = 0;
       let x = 0;
@@ -73,17 +59,15 @@ export default function PointerMotion() {
       let scrolled = 0;
       let raf = 0;
 
-      // Absolute viewport coordinates, for the ring and the hero glow.
-      let ringTX = -200;
-      let ringTY = -200;
-      let ringX = -200;
-      let ringY = -200;
+      // Absolute viewport coordinates, for the hero glow.
+      let pointerX = -200;
+      let pointerY = -200;
 
       const aimAt = (clientX: number, clientY: number) => {
         targetX = (clientX / window.innerWidth - 0.5) * 2;
         targetY = (clientY / window.innerHeight - 0.5) * 2;
-        ringTX = clientX;
-        ringTY = clientY;
+        pointerX = clientX;
+        pointerY = clientY;
       };
 
       const onMouse = (e: MouseEvent) => aimAt(e.clientX, e.clientY);
@@ -103,8 +87,6 @@ export default function PointerMotion() {
       const frame = () => {
         x += (targetX - x) * EASE;
         y += (targetY - y) * EASE;
-        ringX += (ringTX - ringX) * RING_EASE;
-        ringY += (ringTY - ringY) * RING_EASE;
 
         if (field) {
           const depth = Math.min(scrolled, 900) * 0.14; // scroll parallax
@@ -122,16 +104,14 @@ export default function PointerMotion() {
           // The glow is painted in the hero's own box, so the viewport
           // coordinate has to be converted into the hero's space.
           const r = hero.getBoundingClientRect();
-          hero.style.setProperty('--gx', `${ringTX - r.left}px`);
-          hero.style.setProperty('--gy', `${ringTY - r.top}px`);
+          hero.style.setProperty('--gx', `${pointerX - r.left}px`);
+          hero.style.setProperty('--gy', `${pointerY - r.top}px`);
         }
 
         for (const img of galleryImages) {
           // Pre-scaled 1.06 in CSS so the frame never exposes an empty edge.
           img.style.transform = `scale(1.06) translate3d(${x * 7}px, ${y * 5}px, 0)`;
         }
-
-        if (ring) ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`;
 
         raf = requestAnimationFrame(frame);
       };
@@ -152,29 +132,7 @@ export default function PointerMotion() {
     }
 
     /* ---------------------------------------------------------------------
-       2. Ring state — it grows over anything clickable.
-       Delegated from the document, so a node that mounts later still gets it.
-       --------------------------------------------------------------------- */
-    if (ring) {
-      const r = ring;
-      const HOT = 'a, button, [data-cursor-hot]';
-      const over = (e: Event) => {
-        const target = e.target as Element | null;
-        const hot = target && 'closest' in target ? target.closest(HOT) : null;
-        r.classList.toggle('ring--hot', Boolean(hot));
-        r.classList.add('ring--on');
-      };
-      const hide = () => r.classList.remove('ring--on');
-      document.addEventListener('mouseover', over, { passive: true });
-      document.addEventListener('mouseleave', hide);
-      cleanups.push(() => {
-        document.removeEventListener('mouseover', over);
-        document.removeEventListener('mouseleave', hide);
-      });
-    }
-
-    /* ---------------------------------------------------------------------
-       3. Tilt — team cards and gallery frames.
+       2. Tilt — team cards and gallery frames.
        transform only. The element keeps a slower transition on release so it
        settles back instead of snapping.
        --------------------------------------------------------------------- */
@@ -210,7 +168,7 @@ export default function PointerMotion() {
     }
 
     /* ---------------------------------------------------------------------
-       4. Buttons: fill origin + tap ripple.
+       3. Buttons: fill origin + tap ripple.
        The fill itself is a CSS disc that scales up. All JS does is say WHERE
        the pointer crossed the edge, so the fill grows from that point rather
        than always from the middle.
