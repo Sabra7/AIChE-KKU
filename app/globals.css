@@ -29,6 +29,7 @@
      TIMELINE ............. .tl
      GALLERY .............. .gal
      TEAM ................. .sup, .grp, .team, .card
+     PARTNERS ............. .prt
      JOIN ................. .join, .social
      FOOTER ............... .ftr
      REDUCED MOTION ....... the opt-out block; keep it last
@@ -853,6 +854,35 @@ html[lang="en"] .hero h1{ max-width:15ch; }
 }
 .card__toggle[aria-expanded="true"]{ border-color:var(--accent); color:var(--green-deep); }
 @media (hover:none){ .card__toggle{ display:inline-flex; align-items:center; } }
+
+/* ===========================================================================
+   PARTNERS  —  logos only, no links, no motion
+   =========================================================================== */
+/* auto-fit, never a fixed column count: the section starts at two partners and
+   is expected to reach three or five without the layout breaking. */
+.prt{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+  gap:clamp(1.2rem,3vw,2.2rem);
+  max-width:820px; margin-inline:auto;
+}
+.prt__item{ text-align:center; }
+
+/* Fixed height + contain is what lets logos of different proportions sit on
+   one visual line without any of them being cropped or stretched.
+   The near-white ground is a hair lighter than --bg so a logo with a
+   transparent background still has something to sit on; it is not a frame. */
+.prt__logo{
+  position:relative; height:130px;
+  border-radius:var(--r-md);
+  background:var(--surface);
+  margin-bottom:.9rem;
+}
+/* The breathing room has to live on the image, not on the box: next/image's
+   `fill` is absolutely positioned, so it is laid out against the box's PADDING
+   box and would ignore padding set there. */
+.prt__logo img{ object-fit:contain; padding:1.2rem; }
+
+.prt__name{ font-size:var(--t-sm); color:var(--ink-2); }
 
 /* ===========================================================================
    JOIN
