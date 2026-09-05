@@ -10,6 +10,19 @@ import { IconSprite } from './Icon';
 import PointerMotion from './PointerMotion';
 
 /**
+ * Serialises structured data for an inline <script>.
+ *
+ * `<` is escaped even though every value comes from data/ and never from a
+ * visitor: an HTML parser ends a script block at the first literal `</script>`
+ * regardless of JSON quoting, so a chapter name or a partner URL containing
+ * that sequence would break out of the block and inject markup. The escape is
+ * valid JSON and parses back to the same string, so nothing is lost.
+ */
+function serialiseJsonLd(data: object) {
+  return JSON.stringify(data).replaceAll('<', '\\u003c');
+}
+
+/**
  * The document shell.
  *
  * The site ships as two separate static trees — Arabic at `/` and English at
@@ -36,7 +49,7 @@ export default function Shell({
         {jsonLd && (
           <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            dangerouslySetInnerHTML={{ __html: serialiseJsonLd(jsonLd) }}
           />
         )}
 
@@ -48,7 +61,11 @@ export default function Shell({
         <ChemDefs />
         <Header lang={lang} />
 
-        <main id="main">{children}</main>
+        {/* tabIndex makes the skip link move FOCUS and not just the scroll
+            position — without it the next Tab returns to the header. */}
+        <main id="main" tabIndex={-1}>
+          {children}
+        </main>
 
         <Footer lang={lang} />
 

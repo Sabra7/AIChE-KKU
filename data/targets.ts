@@ -37,8 +37,3 @@ export const achievements: Figure[] = [
   { value: '30+', labelAr: 'ورشة ودورة',      labelEn: 'workshops & courses' },
   { value: '80+', labelAr: 'مستفيدًا',         labelEn: 'beneficiaries' },
 ];
-
-/** AIChE worldwide — used in the hero and in the CONNECT gain. */
-export const globalReach = {
-  countries: '110+',
-} as const;

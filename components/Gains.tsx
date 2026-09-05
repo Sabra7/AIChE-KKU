@@ -125,7 +125,8 @@ export default function Gains({ lang }: { lang: Lang }) {
         gsapRef.current = { gsap, ScrollTrigger };
         setFlat(false);
       } catch {
-        // Offline, blocked CDN, whatever — the flat list stays.
+        // GSAP ships in the bundle, so this only fires if its chunk fails to
+        // arrive (a dropped connection mid-load). The flat list stays.
       }
     })();
 

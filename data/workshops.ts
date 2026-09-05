@@ -65,5 +65,3 @@ export const workshops: Workshop[] = [
     featured: true,
   },
 ];
-
-export const featuredWorkshops = () => workshops.filter((w) => w.featured);

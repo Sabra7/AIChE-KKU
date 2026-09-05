@@ -91,7 +91,14 @@ html[dir="rtl"]{ --dir: -1; }
 
 *,*::before,*::after{ box-sizing:border-box; }
 
-html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
+html{
+  scroll-behavior:smooth;
+  -webkit-text-size-adjust:100%;
+  /* The header is fixed, so an anchor target would otherwise scroll to
+     sit UNDER it. scroll-padding offsets every in-page jump — nav links
+     and the skip link alike — by exactly the header's height. */
+  scroll-padding-top:var(--hdr-h);
+}
 
 body{
   margin:0;
@@ -246,14 +253,23 @@ a{ color:inherit; }
 @media (max-width:860px){
   .burger{ display:block; }
   .nav{
-    position:fixed; inset-inline:0; top:66px;
+    position:fixed; inset-inline:0; top:var(--hdr-h);
     flex-direction:column; align-items:flex-start; gap:0;
     background:var(--bg); border-bottom:1px solid var(--rule);
     padding:.5rem var(--gutter) 1.5rem;
     transform:translateY(-12px); opacity:0; pointer-events:none;
-    transition:opacity .3s var(--ease), transform .3s var(--ease);
+    /* visibility, not just opacity: an invisible link is still in the tab
+       order, so a keyboard visitor would otherwise tab through five links
+       that are not on screen. It is delayed to the end of the fade so the
+       close animation still plays. */
+    visibility:hidden;
+    transition:opacity .3s var(--ease), transform .3s var(--ease),
+               visibility 0s linear .3s;
   }
-  .nav.open{ transform:none; opacity:1; pointer-events:auto; }
+  .nav.open{
+    transform:none; opacity:1; pointer-events:auto;
+    visibility:visible; transition-delay:0s;
+  }
   .nav a{ width:100%; padding-block:.9rem; border-bottom:1px solid var(--rule); font-size:var(--t-base); }
 }
 
@@ -371,7 +387,7 @@ a{ color:inherit; }
    HERO
    =========================================================================== */
 .hero{
-  position:relative; padding-top:66px;
+  position:relative; padding-top:var(--hdr-h);
   min-height:min(100svh, 860px);
   display:flex; align-items:center;
   overflow:hidden;
@@ -652,6 +668,9 @@ html[lang="ar"] .hero h1{ line-height:1.45; }
 /* ===========================================================================
    TARGETS  (numbers)
    =========================================================================== */
+/* The column count is fixed at five because `targets` in data/targets.ts holds
+   exactly five figures and each one is meant to read as its own column. Adding
+   a sixth target means changing this number and the 900px rule below. */
 .figs{
   display:grid; grid-template-columns:repeat(5,1fr);
   border-top:1px solid var(--rule);
@@ -1279,5 +1298,4 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
   .btn__rip{ display:none; }
 }
 
-.devnote b{ color:var(--accent); }
 }

@@ -2,8 +2,15 @@
  * Regenerates the Open Graph share images.
  *
  * Run `node scripts/og-image.mjs` from the repo root after changing the logo,
- * the chapter name in data/site.ts, or the palette. Needs a network
- * connection: it pulls the two site fonts as TTFs.
+ * the chapter name in data/site.ts, or the palette.
+ *
+ * Requirements, none of which the app itself needs:
+ *   - a network connection — it pulls the two site fonts as TTFs;
+ *   - Node >= 22.6, because it imports data/site.ts directly and relies on
+ *     Node's own TypeScript type stripping;
+ *   - `sharp`, which arrives as an optional dependency of Next rather than a
+ *     declared one. `npm install --omit=optional`, or a platform Next ships no
+ *     sharp binary for, leaves it absent; `npm install sharp` fixes that.
  *
  * Why a script producing static PNGs instead of `opengraph-image.tsx`:
  * `ImageResponse` renders through Satori, which shapes Arabic glyphs correctly
@@ -84,7 +91,16 @@ if (!process.env.OG_FONT_DIR) {
     rmSync(work, { recursive: true, force: true });
   }
 } else {
-  const { default: sharp } = await import('sharp');
+  let sharp;
+  try {
+    ({ default: sharp } = await import('sharp'));
+  } catch {
+    console.error(
+      'og-image: sharp is not installed. It normally arrives as an optional '
+        + 'dependency of Next; install it directly with `npm install sharp`.',
+    );
+    process.exit(1);
+  }
   const { site } = await import('../data/site.ts');
 
   const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

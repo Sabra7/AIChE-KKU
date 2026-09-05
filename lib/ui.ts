@@ -52,4 +52,14 @@ export const ui = {
 
 export type NavKey = keyof typeof ui.navAr;
 
+/**
+ * Nav order, and the contract that makes the nav work at all: **every key here
+ * must match the `id` of a section rendered by HomeSections.**
+ *
+ * Header builds each link's href as `#${key}` and its scroll-spy resolves the
+ * same key through `getElementById`. A key with no matching section produces a
+ * link that scrolls nowhere and is silently skipped by the observer — no error
+ * either way. Sections deliberately left out of the nav (targets, gallery,
+ * partners) simply do not appear here.
+ */
 export const NAV_ORDER: NavKey[] = ['about', 'gains', 'journey', 'team', 'join'];

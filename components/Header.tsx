@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-import { homeHref, LANG_STORAGE_KEY, otherLang, pick, type Lang } from '@/lib/i18n';
+import { homeHref, otherLang, pick, type Lang } from '@/lib/i18n';
 import { NAV_ORDER, ui } from '@/lib/ui';
 import SwapLabel from './SwapLabel';
 
@@ -26,7 +26,16 @@ export default function Header({ lang }: { lang: Lang }) {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Mark the section currently in view, for aria-current and the underline.
+  /**
+   * Mark the section currently in view, for aria-current and the underline.
+   *
+   * The root margin leaves a band roughly 5% of the viewport tall across the
+   * middle: a section counts as "current" only while it crosses that band, so
+   * the highlight moves once per section rather than flickering between two
+   * that are both partly on screen. `active` is never cleared, which is why
+   * scrolling through a section that is not in the nav (targets, gallery,
+   * partners) leaves the previous item marked rather than clearing the nav.
+   */
   useEffect(() => {
     const sections = NAV_ORDER.map((key) => document.getElementById(key)).filter(
       (el): el is HTMLElement => el !== null,
@@ -45,14 +54,6 @@ export default function Header({ lang }: { lang: Lang }) {
 
   const swapTo = otherLang(lang);
   const swapHref = homeHref(swapTo);
-
-  const rememberChoice = () => {
-    try {
-      localStorage.setItem(LANG_STORAGE_KEY, swapTo);
-    } catch {
-      // Private browsing can throw on write. The link still works.
-    }
-  };
 
   return (
     <header className={`hdr${stuck ? ' stuck' : ''}`}>
@@ -91,7 +92,6 @@ export default function Header({ lang }: { lang: Lang }) {
         <Link
           className="langbtn"
           href={swapHref}
-          onClick={rememberChoice}
           hrefLang={swapTo}
           lang={swapTo}
           aria-label={pick(lang, 'Switch to English', 'التبديل إلى العربية')}

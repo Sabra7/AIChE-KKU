@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 /**
  * Pointer-reactive motion — the whole site's motion engine.
@@ -219,38 +219,44 @@ export default function PointerMotion() {
  * Magnetic pull on a primary action. Pointer devices only: on touch the finger
  * is already on the target, so the pull just looks like lag.
  *
+ * Returns a ref to put on the element. It binds to that one element rather
+ * than querying `[data-magnet]` globally, because the hook is called once per
+ * button instance — a global query would have every instance bind listeners to
+ * every other instance's button, so two join buttons meant four sets of
+ * listeners doing the same work twice.
+ *
  * The offset is written to custom properties instead of `transform`, because
  * the button's own hover state also writes `transform` — two sources setting
  * the same property would overwrite each other. CSS composes both values.
  */
-export function useMagnet() {
+export function useMagnet<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+
   useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
     if (reduced()) return;
     if (!finePointer()) return;
 
-    const els = Array.from(document.querySelectorAll<HTMLElement>('[data-magnet]'));
-    const cleanups: Array<() => void> = [];
+    const move = (e: MouseEvent) => {
+      const r = el.getBoundingClientRect();
+      const dx = (e.clientX - (r.left + r.width / 2)) / r.width;
+      const dy = (e.clientY - (r.top + r.height / 2)) / r.height;
+      el.style.setProperty('--mx', `${dx * 16}px`);
+      el.style.setProperty('--my', `${dy * 11}px`);
+    };
+    const leave = () => {
+      el.style.setProperty('--mx', '0px');
+      el.style.setProperty('--my', '0px');
+    };
 
-    for (const el of els) {
-      const move = (e: MouseEvent) => {
-        const r = el.getBoundingClientRect();
-        const dx = (e.clientX - (r.left + r.width / 2)) / r.width;
-        const dy = (e.clientY - (r.top + r.height / 2)) / r.height;
-        el.style.setProperty('--mx', `${dx * 16}px`);
-        el.style.setProperty('--my', `${dy * 11}px`);
-      };
-      const leave = () => {
-        el.style.setProperty('--mx', '0px');
-        el.style.setProperty('--my', '0px');
-      };
-      el.addEventListener('mousemove', move);
-      el.addEventListener('mouseleave', leave);
-      cleanups.push(() => {
-        el.removeEventListener('mousemove', move);
-        el.removeEventListener('mouseleave', leave);
-      });
-    }
-
-    return () => cleanups.forEach((fn) => fn());
+    el.addEventListener('mousemove', move);
+    el.addEventListener('mouseleave', leave);
+    return () => {
+      el.removeEventListener('mousemove', move);
+      el.removeEventListener('mouseleave', leave);
+    };
   }, []);
+
+  return ref;
 }

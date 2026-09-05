@@ -25,12 +25,13 @@ export default function JoinButton({
   lang: Lang;
   size?: 'md' | 'lg';
 }) {
-  useMagnet();
+  const magnetRef = useMagnet<HTMLAnchorElement>();
 
   const label = pick(lang, ui.joinCtaAr, ui.joinCtaEn);
 
   return (
     <a
+      ref={magnetRef}
       className={`btn${size === 'lg' ? ' btn--lg' : ''}`}
       href={joinUrl}
       target="_blank"

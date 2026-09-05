@@ -135,7 +135,16 @@ export default function Team({ lang }: { lang: Lang }) {
   }, []);
 
   useEffect(() => {
+    let alive = true;
     equalise();
+
+    // The first pass runs against the fallback face, because next/font swaps
+    // the real one in asynchronously. Arabic and Latin metrics differ enough
+    // that a bio measured before the swap under-sizes every frame on the page.
+    document.fonts?.ready.then(() => {
+      if (alive) equalise();
+    });
+
     let timer: ReturnType<typeof setTimeout>;
     const onResize = () => {
       clearTimeout(timer);
@@ -143,6 +152,7 @@ export default function Team({ lang }: { lang: Lang }) {
     };
     window.addEventListener('resize', onResize);
     return () => {
+      alive = false;
       clearTimeout(timer);
       window.removeEventListener('resize', onResize);
     };
