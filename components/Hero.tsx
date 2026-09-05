@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import { pick, type Lang } from '@/lib/i18n';
 import { site } from '@/data/site';
+import ChemField from './ChemField';
 import JoinButton from './JoinButton';
 import Num from './Num';
 import Reveal from './Reveal';
@@ -9,9 +10,9 @@ import Reveal from './Reveal';
 /**
  * Hero.
  *
- * The background is a faint field of benzene rings and gears joined by
- * hairlines — the same molecular-bond motif the logo uses, and the motif that
- * recurs at every section joint.
+ * The background is ChemField — benzene rings, gears, bonds carrying a charge
+ * and atoms with orbiting electrons, the same molecular motif the logo uses
+ * and the one that recurs at every section joint.
  *
  * It is split into three [data-depth] layers that the pointer moves at
  * different rates (see PointerMotion). One flat sheet sliding under the
@@ -48,70 +49,7 @@ export default function Hero({ lang }: { lang: Lang }) {
       {/* Painted under the type, centred on the pointer. Pure paint, no layout. */}
       <span className="hero__glow" aria-hidden="true" />
 
-      <svg
-        className="hero__field"
-        data-pointer-field
-        viewBox="0 0 1400 800"
-        preserveAspectRatio="xMidYMid slice"
-        aria-hidden="true"
-      >
-        <defs>
-          <g id="benz">
-            <polygon
-              points="0,-26 22.5,-13 22.5,13 0,26 -22.5,13 -22.5,-13"
-              fill="none"
-              stroke="#0D3E6B"
-              strokeWidth="1.1"
-              strokeOpacity=".2"
-            />
-            <polygon
-              points="0,-17 14.7,-8.5 14.7,8.5 0,17 -14.7,8.5 -14.7,-8.5"
-              fill="none"
-              stroke="#0D3E6B"
-              strokeWidth="1"
-              strokeOpacity=".13"
-            />
-          </g>
-          <g id="cog">
-            <circle r="19" fill="none" stroke="#0D3E6B" strokeWidth="1.1" strokeOpacity=".17" />
-            <circle r="9" fill="none" stroke="#0D3E6B" strokeWidth="1" strokeOpacity=".12" />
-            <g stroke="#0D3E6B" strokeWidth="1.1" strokeOpacity=".17" strokeLinecap="round">
-              <path d="M0,-19V-25M0,19V25M-19,0H-25M19,0H25" />
-              <path d="M13.4,-13.4l4.3,-4.3M-13.4,13.4l-4.3,4.3M13.4,13.4l4.3,4.3M-13.4,-13.4l-4.3,-4.3" />
-            </g>
-          </g>
-        </defs>
-
-        {/* Far layer: the bonds. They barely move, so they read as the ground. */}
-        <g data-depth="0.45" className="hero__bonds">
-          <g stroke="#0D3E6B" strokeOpacity=".1" strokeWidth="1" fill="none">
-            <path d="M150,130 L430,250 L700,90" pathLength={1} />
-            <path d="M1090,360 L1210,190" pathLength={1} />
-            <path d="M120,480 L330,700 L770,720 L980,640" pathLength={1} />
-            <path d="M1090,360 L1310,480" pathLength={1} />
-          </g>
-        </g>
-
-        {/* Mid layer: the gears, slowly turning. */}
-        <g data-depth="0.8">
-          <g className="hero__cogs">
-            <use href="#cog" x="430" y="250" />
-            <use href="#cog" x="1090" y="360" />
-            <use href="#cog" x="120" y="480" />
-            <use href="#cog" x="770" y="720" />
-          </g>
-        </g>
-
-        {/* Near layer: the rings, drifting furthest. */}
-        <g data-depth="1.3">
-          <use href="#benz" x="150" y="130" />
-          <use href="#benz" x="1210" y="190" />
-          <use href="#benz" x="980" y="640" />
-          <use href="#benz" x="330" y="700" />
-          <use href="#benz" x="700" y="90" />
-          <use href="#benz" x="1310" y="480" />
-        </g>
-      </svg>
+      <ChemField variant="hero" pointer />
 
       <div className="shell hero__in">
         <Reveal as="p" className="hero__eyebrow">

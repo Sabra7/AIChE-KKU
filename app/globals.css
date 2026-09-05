@@ -18,13 +18,14 @@
      SECTION ENTRANCE ..... .reveal + delay steps
      TILT ................. [data-tilt]
      HEADER ............... .hdr, .brand, .ico, .nav, .langbtn, .burger
-     HERO ................. .hero and its field, glow, title, cue
+     CHEMISTRY FIELD ...... .chem  (the animated background, hero + gains)
+     HERO ................. .hero and its glow, title, cue
      BUTTONS .............. .btn and its fill, icon, chevron, ripple
      SWAPPING LABEL ....... .swap
      SECTION FURNITURE .... .sect, .sect__head, .joint
      ABOUT ................ .story, .beats, .beat
      TARGETS .............. .figs, .fig, .cnt
-     GAINS ................ .gains, .gainlist, .gain  (the pinned section)
+     GAINS ................ .gains, .gainlist, .gain  (pinned, or a phone rail)
      PROGRAMME ............ .wshops, .wshop
      TIMELINE ............. .tl
      GALLERY .............. .gal
@@ -79,7 +80,14 @@
   --gutter: clamp(1.25rem, 5vw, 4rem);
 
   --ease: cubic-bezier(.22,.61,.36,1);
+
+  /* Writing direction as a number, for the handful of keyframes that have to
+     travel "forwards" along the text. CSS has logical properties but no
+     logical translate, so a nudge authored as +8px points the wrong way the
+     moment the page is Arabic. Multiply by this instead. */
+  --dir: 1;
 }
+html[dir="rtl"]{ --dir: -1; }
 
 *,*::before,*::after{ box-sizing:border-box; }
 
@@ -250,6 +258,116 @@ a{ color:inherit; }
 }
 
 /* ===========================================================================
+   CHEMISTRY FIELD  —  the animated background, behind the hero and behind GAINS
+
+   Four motifs, and every one of them is chemistry rather than ornament:
+   benzene rings, gears, covalent bonds with a charge running down them, and
+   Bohr atoms. All four move on their own, with no pointer involved — a phone
+   has no pointer to give, and a background that only lives on a laptop is not
+   a background.
+
+   ChemField.tsx draws it as two canvases, one landscape and one portrait,
+   because `preserveAspectRatio="slice"` crops a 1400-unit-wide canvas to
+   roughly its middle third on a 390px screen — which is why the motif used to
+   be invisible on a phone. Only one canvas is ever displayed, and
+   `display:none` on the other stops its animations dead, so nothing is paid
+   for the canvas that is off screen.
+   =========================================================================== */
+.chem{
+  position:absolute; inset:0; z-index:0;
+  pointer-events:none;
+  will-change:transform;
+}
+/* Ink on cream, cream on ink. Every stroke in the definitions is currentColor,
+   so one set of shapes serves both sections. */
+.chem--hero{ color:var(--ink); opacity:.7; }
+.chem--gains{ color:var(--bg); opacity:.5; }
+
+.chem--tall{ display:none; }
+@media (max-width:767px){
+  .chem--wide{ display:none; }
+  .chem--tall{ display:block; }
+}
+
+/* Each depth layer is transformed on its own, so they must not inherit a
+   transition — PointerMotion writes them every frame. */
+.chem [data-depth]{ will-change:transform; }
+
+/* --- bonds -----------------------------------------------------------------
+   They draw themselves once on load. pathLength="1" is set in the markup, so
+   one dasharray value works for paths of completely different lengths. */
+.chem__bond{
+  fill:none; stroke:currentColor; stroke-opacity:.34; stroke-width:1.2;
+  stroke-dasharray:1; stroke-dashoffset:1;
+  animation:chem-draw 2.2s var(--ease) forwards;
+  animation-delay:calc(.25s + var(--i) * .16s);
+}
+@keyframes chem-draw{ to{ stroke-dashoffset:0; } }
+
+/* The charge travelling down the bond: a second copy of the same path carrying
+   one very short dash, offset around it forever. Overlaying rather than
+   animating the bond itself is what leaves the drawn line permanent beneath. */
+.chem__pulse{
+  fill:none; stroke:var(--accent); stroke-opacity:.85;
+  stroke-width:2.6; stroke-linecap:round;
+  stroke-dasharray:.02 .98; stroke-dashoffset:0;
+  animation:chem-pulse 9s linear infinite;
+  animation-delay:calc(var(--i) * -1.5s);
+}
+@keyframes chem-pulse{ to{ stroke-dashoffset:-1; } }
+
+/* --- gears -----------------------------------------------------------------
+   Rotation about their own centre needs transform-box:fill-box, otherwise SVG
+   spins them around the viewBox origin and they fly off the canvas. */
+.chem__cog{
+  transform-box:fill-box; transform-origin:center;
+  animation:chem-spin 46s linear infinite;
+}
+.chem__cog:nth-child(even){ animation-direction:reverse; animation-duration:62s; }
+@keyframes chem-spin{ to{ transform:rotate(360deg); } }
+
+/* --- benzene rings ---------------------------------------------------------
+   The wrapper drifts, the ring inside it turns. Two elements, because one
+   element cannot run two transform animations at once. */
+.chem__ring{
+  animation:chem-drift 24s ease-in-out infinite alternate;
+  animation-delay:calc(var(--i) * -3.7s);
+}
+.chem__ring:nth-child(even){ animation-name:chem-drift-b; animation-duration:31s; }
+.chem__ring > use{
+  transform-box:fill-box; transform-origin:center;
+  animation:chem-spin 88s linear infinite;
+}
+.chem__ring:nth-child(odd) > use{ animation-duration:118s; animation-direction:reverse; }
+@keyframes chem-drift{
+  from{ transform:translate(-10px,7px); }
+  to{ transform:translate(10px,-9px); }
+}
+@keyframes chem-drift-b{
+  from{ transform:translate(8px,9px); }
+  to{ transform:translate(-9px,-7px); }
+}
+
+/* --- atoms -----------------------------------------------------------------
+   Each shell turns in its own plane at its own rate. The electron PAIR is not
+   only chemistry: it keeps the shell's bounding box symmetric, which is what
+   lets fill-box turn it about its true centre instead of wobbling off-axis. */
+.chem__shell{
+  transform-box:fill-box; transform-origin:center;
+  animation:chem-spin linear infinite;
+  /* Deliberately unrelated periods — 13s, 19.5s, 26s. Close rates would let
+     all three shells line up on the same angle every few seconds, and three
+     aligned ellipses read as a lens, not as an atom. */
+  animation-duration:calc(13s + var(--i) * 6.5s);
+  animation-delay:calc(var(--i) * -3s);
+}
+/* The middle shell counter-rotates, so the three never lock into one figure. */
+.chem__atom > g:nth-of-type(2) .chem__shell{ animation-direction:reverse; }
+.chem__orbit{ fill:none; stroke:currentColor; stroke-opacity:.32; stroke-width:1.15; }
+.chem__e{ fill:var(--accent); fill-opacity:.9; stroke:none; }
+.chem__nucleus{ fill:currentColor; fill-opacity:.5; stroke:none; }
+
+/* ===========================================================================
    HERO
    =========================================================================== */
 .hero{
@@ -258,36 +376,6 @@ a{ color:inherit; }
   display:flex; align-items:center;
   overflow:hidden;
 }
-.hero__field{
-  position:absolute; inset:0; z-index:0;
-  opacity:.5; pointer-events:none;
-  will-change:transform;
-}
-/* Each depth layer is transformed on its own, so they must not inherit a
-   transition — PointerMotion writes them every frame. */
-.hero__field [data-depth]{ will-change:transform; }
-
-/* The gears turn slowly and forever. Rotation about their own centre needs
-   transform-box:fill-box, otherwise SVG spins them around the viewBox origin
-   and they fly off the canvas. */
-.hero__cogs > use{
-  transform-box:fill-box; transform-origin:center;
-  animation:cog 46s linear infinite;
-}
-.hero__cogs > use:nth-child(even){ animation-direction:reverse; animation-duration:62s; }
-@keyframes cog{ to{ transform:rotate(360deg); } }
-
-/* The bonds draw themselves once on load. pathLength="1" is set in the markup
-   so one dasharray value works for paths of completely different lengths. */
-.hero__bonds path{
-  stroke-dasharray:1; stroke-dashoffset:1;
-  animation:draw 2.2s var(--ease) .3s forwards;
-}
-.hero__bonds path:nth-child(2){ animation-delay:.5s; }
-.hero__bonds path:nth-child(3){ animation-delay:.7s; }
-.hero__bonds path:nth-child(4){ animation-delay:.9s; }
-@keyframes draw{ to{ stroke-dashoffset:0; } }
-
 /* Pointer glow. Paint only — no layout, no transform, nothing to invalidate. */
 .hero__glow{
   position:absolute; inset:0; z-index:0; pointer-events:none;
@@ -648,7 +736,7 @@ html[lang="ar"] .hero h1{ line-height:1.45; }
    zero once it does not, so a short window pushes the overflow off the BOTTOM.
    `align-items:center` would split the overflow evenly and hide the heading
    behind the header — which is exactly the bug this replaced. */
-.gains__stage{ width:100%; margin-block:auto; }
+.gains__stage{ position:relative; z-index:1; width:100%; margin-block:auto; }
 
 .gainlist{ list-style:none; margin:0; padding:0; }
 .gain{
@@ -687,14 +775,33 @@ html[lang="ar"] .hero h1{ line-height:1.45; }
 }
 .gain.on .gain__d{ opacity:1; transform:none; }
 
+/* The rule and the counter share a row: the rule is the whole story on a
+   laptop, and on a phone the counter beside it is what turns "you have moved"
+   into "you have four left". */
+.gains__foot{
+  display:flex; align-items:center; gap:.9rem;
+  margin-top:clamp(1.1rem,2.6svh,2.5rem);
+}
 .gains__rule{
-  height:3px; border-radius:999px; background:rgba(245,241,238,.16);
-  margin-top:clamp(1.1rem,2.6svh,2.5rem); position:relative; overflow:hidden;
+  flex:1; height:3px; border-radius:999px; background:rgba(245,241,238,.16);
+  position:relative; overflow:hidden;
 }
 .gains__rule i{
   position:absolute; inset:0; background:var(--accent); border-radius:999px;
-  transform:scaleX(0); transform-origin:inline-start;
+  transform:scaleX(0);
+  /* transform-origin takes no logical keywords — `inline-start` is invalid, so
+     the declaration was dropped and the fill grew outwards from the middle in
+     both directions. It has to be spelled out per writing direction. */
+  transform-origin:left center;
 }
+html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
+
+/* All three are phone furniture. They ship in the server-rendered HTML and are
+   switched on by the rail media query below, so the prompt to swipe is on
+   screen from the first paint rather than a beat after the cards it names. */
+.gains__swipe{ display:none; }
+.gains__count{ display:none; }
+.gain__n{ display:none; }
 
 @media (max-width:700px){
   .gain{ flex-direction:column; gap:.15rem; align-items:flex-start; }
@@ -705,13 +812,120 @@ html[lang="ar"] .hero h1{ line-height:1.45; }
   .gain__i{ align-self:flex-start; }
 }
 
-/* Fallback list when the pin is disabled (small screens / reduced motion) */
+/* Fallback list when the pin is disabled (small screens / reduced motion).
+   `position:relative` rather than static: the chemistry field behind the stage
+   is absolutely positioned, and it has to resolve against — and be clipped by
+   — this box rather than escaping to the track. */
 .gains--flat .gains__track{ height:auto !important; }
-.gains--flat .gains__pin{ position:static; height:auto; padding-block:1rem; }
+.gains--flat .gains__pin{ position:relative; height:auto; padding-block:1rem; }
 .gains--flat .gain{ opacity:1; }
 .gains--flat .gain__w{ color:var(--accent); }
 .gains--flat .gain__d{ opacity:1; transform:none; }
-.gains--flat .gains__rule{ display:none; }
+/* Nothing to be a progress bar OF, until the rail below turns it back on. */
+.gains--flat .gains__foot{ display:none; }
+
+/* ---------------------------------------------------------------------------
+   THE PHONE RAIL
+
+   Six full-width rows stacked vertically bury the last of them, so on a phone
+   the rows become cards on one horizontal scroller. Everything below exists so
+   that nobody has to DISCOVER the gesture:
+
+     · the list is pulled full-bleed out of .shell, so the next card is cut in
+       half by the screen edge — the plainest possible statement that the row
+       carries on past the fold;
+     · a line of copy names the gesture outright, and retires itself once the
+       visitor has swiped;
+     · the same rule the pinned version fills, fills here too;
+     · a counter says which card this is, out of how many.
+
+   The breakpoint matches RAIL_MQ in Gains.tsx. Layout is CSS, so the first
+   paint on a phone is already horizontal with no flash of the stacked list;
+   the JS only supplies progress.
+   --------------------------------------------------------------------------- */
+@keyframes swipe-nudge{
+  0%,100%{ transform:translateX(0); }
+  45%{ transform:translateX(calc(var(--dir) * 7px)); }
+}
+
+@media (max-width:767px){
+  .gains--flat .gains__swipe{
+    display:flex; align-items:center; gap:.5rem;
+    font-size:var(--t-xs); line-height:1.5;
+    color:rgba(245,241,238,.72);
+    margin-bottom:.85rem;
+    transition:opacity .5s var(--ease);
+  }
+  /* Fades rather than unmounts: pulling it out of the flow would shift the
+     rail up under the finger that just swiped it. */
+  .gains--flat .gains__swipe.is-done{ opacity:0; }
+  .gains__swipe-arrow{
+    display:inline-flex; flex:none; color:var(--accent);
+    animation:swipe-nudge 1.7s var(--ease) infinite;
+  }
+
+  .gains--flat .gainlist{
+    display:flex; gap:.85rem;
+    overflow-x:auto; overscroll-behavior-x:contain;
+    scroll-snap-type:x mandatory;
+    scroll-padding-inline:var(--gutter);
+    /* Full-bleed: cancel .shell's gutter, then re-apply it as padding. The
+       cards still rest on the heading's margin, but they are cut by the SCREEN
+       edge instead of by a container — and that cut is the affordance. */
+    margin-inline:calc(var(--gutter) * -1);
+    padding-inline:var(--gutter);
+    padding-block:.2rem 1rem;
+    /* The custom rule below reports position better than a hairline scrollbar
+       that most phones never paint in the first place. */
+    scrollbar-width:none;
+  }
+  .gains--flat .gainlist::-webkit-scrollbar{ display:none; }
+
+  .gains--flat .gain{
+    position:relative;
+    /* min-width:0 matters: without it a card whose word is wider than its
+       basis is floored at min-content, and one long word (COMMUNICATE) would
+       make a single card wider than all the others. */
+    flex:0 0 74%; min-width:0; max-width:300px;
+    scroll-snap-align:start;
+    flex-direction:column; align-items:flex-start; gap:.45rem;
+    padding:1.15rem 1.05rem 1.35rem;
+    border:1px solid rgba(245,241,238,.16); border-radius:var(--r-md);
+    background:rgba(245,241,238,.045);
+    transition:border-color .35s var(--ease), background-color .35s var(--ease);
+  }
+  .gains--flat .gain.on{
+    border-color:rgba(139,203,50,.45);
+    background:rgba(139,203,50,.07);
+  }
+  .gains--flat .gain__i{ font-size:1.5rem; align-self:flex-start; }
+  /* Sized to clear the longest word — COMMUNICATE — inside the narrowest card
+     a 320px phone can produce, with room left over. */
+  .gains--flat .gain__w{ font-size:clamp(1.4rem,6.4vw,2.1rem); max-width:100%; }
+  .gains--flat .gain__d{ max-width:none; }
+
+  .gain__n{
+    display:block; position:absolute;
+    inset-block-start:.9rem; inset-inline-end:1rem;
+    font-family:var(--font-en); font-weight:600;
+    font-size:.7rem; letter-spacing:.14em; line-height:1;
+    color:rgba(245,241,238,.38);
+    transition:color .35s var(--ease);
+  }
+  .gain.on .gain__n{ color:var(--accent); }
+
+  .gains--flat .gains__foot{ display:flex; }
+  .gains__count{
+    display:flex; gap:.28em; flex:none;
+    /* "01 / 06" is one expression, not a sentence: left to the page direction
+       it comes out as "06 / 01" in Arabic, which reads as the wrong card. */
+    direction:ltr;
+    font-family:var(--font-en); font-weight:600;
+    font-size:var(--t-xs); letter-spacing:.06em;
+    color:rgba(245,241,238,.78);
+  }
+  .gains__count i{ font-style:normal; color:rgba(245,241,238,.38); }
+}
 
 /* ===========================================================================
    PROGRAMME
@@ -1047,7 +1261,7 @@ html[lang="ar"] .hero h1{ line-height:1.45; }
   }
   .reveal{ opacity:1 !important; transform:none !important; }
   .gal figcaption{ opacity:1; transform:none; }
-  .hero__field,
+  .chem,
   .hero__glow,
   .hero__cue{ display:none; }
   .gal img{ transform:none !important; }
@@ -1057,7 +1271,8 @@ html[lang="ar"] .hero h1{ line-height:1.45; }
   /* Every masked/drawn element has to be handed its finished state, or it
      stays hidden forever once its animation is suppressed. */
   .hero h1 .w > i{ transform:none !important; }
-  .hero__bonds path{ stroke-dashoffset:0 !important; }
+  .chem__bond{ stroke-dashoffset:0 !important; }
+  .chem__pulse{ display:none; }
   .joint line{ stroke-dashoffset:0 !important; }
   .joint circle{ scale:1 !important; }
   .swap > span:nth-child(2){ display:none; }

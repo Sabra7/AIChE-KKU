@@ -11,8 +11,8 @@ import { useEffect } from 'react';
  * drift out of sync.
  *
  * What the loop drives:
- *   - the hero field, in three depth layers ([data-depth]) so the motif has
- *     parallax rather than sliding as one flat sheet;
+ *   - the hero chemistry field, in three depth layers ([data-depth]) so the
+ *     motif has parallax rather than sliding as one flat sheet;
  *   - a soft accent glow that trails the pointer across the hero;
  *   - the gallery images ([data-pointer-drift]).
  *
@@ -43,7 +43,11 @@ export default function PointerMotion() {
        1. The shared rAF loop
        --------------------------------------------------------------------- */
     const hero = document.querySelector<HTMLElement>('[data-hero]');
-    const field = document.querySelector<HTMLElement>('[data-pointer-field]');
+    // Plural: the field is authored as two canvases, one per screen shape,
+    // and CSS decides which of them is on screen.
+    const fields = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-pointer-field]'),
+    );
     const layers = Array.from(
       document.querySelectorAll<HTMLElement>('[data-pointer-field] [data-depth]'),
     );
@@ -51,7 +55,7 @@ export default function PointerMotion() {
       document.querySelectorAll<HTMLElement>('[data-pointer-drift]'),
     );
 
-    if (field || galleryImages.length > 0) {
+    if (fields.length > 0 || galleryImages.length > 0) {
       let targetX = 0;
       let targetY = 0;
       let x = 0;
@@ -88,9 +92,11 @@ export default function PointerMotion() {
         x += (targetX - x) * EASE;
         y += (targetY - y) * EASE;
 
-        if (field) {
+        if (fields.length > 0) {
           const depth = Math.min(scrolled, 900) * 0.14; // scroll parallax
-          field.style.transform = `translate3d(0, ${depth}px, 0)`;
+          for (const f of fields) {
+            f.style.transform = `translate3d(0, ${depth}px, 0)`;
+          }
           // Each layer moves by its own factor: the near layer overshoots the
           // far one, and that difference is the only reason the motif reads
           // as having depth at all.

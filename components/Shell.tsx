@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { dirOf, pick, type Lang } from '@/lib/i18n';
 import { fontVars } from '@/lib/fonts';
 import { ui } from '@/lib/ui';
+import { ChemDefs } from './ChemField';
 import Footer from './Footer';
 import Header from './Header';
 import { IconSprite } from './Icon';
@@ -44,6 +45,7 @@ export default function Shell({
         </a>
 
         <IconSprite />
+        <ChemDefs />
         <Header lang={lang} />
 
         <main id="main">{children}</main>
