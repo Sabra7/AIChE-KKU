@@ -37,7 +37,8 @@ export const metadata: Metadata = {
     // Paste the token from Google Search Console here, from a property of type
     // "URL prefix". DNS verification is not an option while the site lives on
     // vercel.app, since we do not control that domain's records.
-    google: '',
+    // The token only — Next wraps it in the meta tag itself.
+    google: 'wIE6QzaD2FwUCRpzzJuGLDeLX_jgqAm9pWwIbXHex9A',
   },
 };
 

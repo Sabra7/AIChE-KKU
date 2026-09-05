@@ -71,6 +71,10 @@
   --r-md: 14px;
   --r-lg: 20px;
 
+  /* The fixed header's height. The pinned Gains stage has to subtract it,
+     so it cannot stay a magic number inside .hdr__in. */
+  --hdr-h: 66px;
+
   --shell: 1180px;
   --gutter: clamp(1.25rem, 5vw, 4rem);
 
@@ -181,7 +185,7 @@ a{ color:inherit; }
 .hdr.stuck{ border-bottom-color:var(--rule); }
 .hdr__in{
   display:flex; align-items:center; gap:1.25rem;
-  height:66px;
+  height:var(--hdr-h);
 }
 .brand{
   display:flex; align-items:center; gap:.6rem;
@@ -621,7 +625,7 @@ html[lang="ar"] .hero h1{ line-height:1.45; }
 .gains{ background:var(--ink); color:var(--bg); }
 /* Tighter than the global section head: the stage is one viewport tall and the
    head shares it with six rows, so the standard gap would push them off. */
-.gains .sect__head{ margin-bottom:2.2rem; }
+.gains .sect__head{ margin-bottom:clamp(1rem,2.6svh,2.2rem); }
 /* Smaller than a normal section head: this one shares the pinned stage with
    six rows, so it cannot take the full --t-2xl without crowding them. */
 .gains .sect__head h2{ color:var(--bg); font-size:clamp(1.4rem,3.4vw,2.2rem); }
@@ -633,15 +637,23 @@ html[lang="ar"] .hero h1{ line-height:1.45; }
 .gains__pin{
   position:sticky; top:0;
   height:100svh;
-  display:flex; align-items:center;
+  display:flex; align-items:flex-start;
   overflow:hidden;
+  /* The header is fixed and translucent, so content centred in a full-viewport
+     box sits underneath it and reads through the blur. Centre in what the
+     header leaves instead. */
+  padding-top:var(--hdr-h);
 }
-.gains__stage{ width:100%; }
+/* Safe centring: auto margins centre the stage while it fits, then collapse to
+   zero once it does not, so a short window pushes the overflow off the BOTTOM.
+   `align-items:center` would split the overflow evenly and hide the heading
+   behind the header — which is exactly the bug this replaced. */
+.gains__stage{ width:100%; margin-block:auto; }
 
 .gainlist{ list-style:none; margin:0; padding:0; }
 .gain{
   display:flex; align-items:baseline; gap:clamp(1rem,3vw,2.5rem);
-  padding-block:clamp(.35rem,1.1vw,.7rem);
+  padding-block:clamp(.2rem,.85svh,.7rem);
   opacity:.24;
   transition:opacity .45s var(--ease);
 }
@@ -654,7 +666,11 @@ html[lang="ar"] .hero h1{ line-height:1.45; }
 }
 .gain__w{
   font-family:var(--font-en); font-weight:700;
-  font-size:clamp(1.9rem,6.2vw,4.2rem);
+  /* Capped against viewport height as well as width: the stage is one screen
+     tall, and six rows sized only by width overflow a short laptop window —
+     which pushed the heading up under the header. On narrow screens vw is
+     still the smaller term, so phones are unaffected. */
+  font-size:clamp(1.9rem,min(6.2vw,7.4svh),4.2rem);
   letter-spacing:-.035em; line-height:1.05;
   flex:none;
   transition:color .45s var(--ease);
@@ -673,7 +689,7 @@ html[lang="ar"] .hero h1{ line-height:1.45; }
 
 .gains__rule{
   height:3px; border-radius:999px; background:rgba(245,241,238,.16);
-  margin-top:2.5rem; position:relative; overflow:hidden;
+  margin-top:clamp(1.1rem,2.6svh,2.5rem); position:relative; overflow:hidden;
 }
 .gains__rule i{
   position:absolute; inset:0; background:var(--accent); border-radius:999px;
