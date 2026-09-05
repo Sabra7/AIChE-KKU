@@ -1,8 +1,14 @@
 import { pick, type Lang } from '@/lib/i18n';
 import { achievements, targets } from '@/data/targets';
 import CountUp from './CountUp';
-import Num from './Num';
+import DualDate from './DualDate';
 import Reveal from './Reveal';
+
+/** The plan's academic year, 2026/2027, is 1448 AH. */
+const PLAN_YEAR = { greg: '2026/2027', hijri: '1448' };
+
+/** Chartered July 2021 — Dhu al-Qi'dah / Dhu al-Hijjah 1442. */
+const CHARTER_YEAR = { greg: '2021', hijri: '1442' };
 
 /**
  * The numbers section.
@@ -21,11 +27,11 @@ export default function Targets({ lang }: { lang: Lang }) {
           <h2>
             {lang === 'ar' ? (
               <>
-                مستهدفاتنا <Num>2026/2027</Num>
+                مستهدفاتنا <DualDate lang={lang} date={PLAN_YEAR} />
               </>
             ) : (
               <>
-                Our <Num>2026/27</Num> targets
+                Our <DualDate lang={lang} date={PLAN_YEAR} /> targets
               </>
             )}
           </h2>
@@ -49,7 +55,7 @@ export default function Targets({ lang }: { lang: Lang }) {
 
         <Reveal as="p" delay={2} className="figs__foot">
           {pick(lang, 'الفرع منذ ', 'The chapter since ')}
-          <Num>2021</Num>
+          <DualDate lang={lang} date={CHARTER_YEAR} inline />
           {': '}
           {achievements
             .map((a) => `${a.value} ${pick(lang, a.labelAr, a.labelEn)}`)

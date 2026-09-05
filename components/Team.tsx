@@ -1,25 +1,13 @@
 'use client';
 
 import Image from 'next/image';
-import { useCallback, useEffect, useRef, useState, type ReactElement } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { pick, type Lang } from '@/lib/i18n';
+import { SocialMark, SOCIAL_LABELS, type SocialKey } from '@/lib/socials';
 import { ui } from '@/lib/ui';
-import { committees, leadership, supervisor, type Member, type SocialKey } from '@/data/team';
+import { committees, leadership, supervisor, type Member } from '@/data/team';
 import Reveal from './Reveal';
-
-const SOCIAL_ICONS: Record<SocialKey, ReactElement> = {
-  linkedin: (
-    <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M4.98 3.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM2.9 21h4.2V9.4H2.9V21zM9.6 9.4V21h4.2v-6.2c0-1.7.9-2.6 2.2-2.6 1.2 0 2 .8 2 2.6V21h4.2v-6.9c0-3.5-1.9-5.1-4.4-5.1-2 0-2.9 1.1-3.4 1.9h-.1V9.4H9.6z" />
-    </svg>
-  ),
-  github: (
-    <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12 2a10 10 0 00-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.4-3.4-1.4-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.7.4-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.7 1a9.4 9.4 0 015 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0012 2z" />
-    </svg>
-  ),
-};
 
 /** Two-letter fallback drawn from the English name. */
 const initialsOf = (name: string) =>
@@ -73,6 +61,26 @@ function MemberCard({ member, lang }: { member: Member; lang: Lang }) {
         <span className="card__sheen" />
         <span className="card__veil" />
         {bio && <p className="card__bio">{bio}</p>}
+
+        {/*
+          Touch devices have no hover, so the bio needs a real control. It sits
+          in the frame's bottom corner rather than under the card: the photo is
+          what it acts on, and below the card it read as a stray chip stranded
+          in the corner. It must live inside .card__ph because that is the
+          positioned ancestor — and the rounded overflow that keeps it tucked
+          into the frame.
+        */}
+        {bio && (
+          <button
+            className="card__toggle"
+            type="button"
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+            data-ripple
+          >
+            {pick(lang, ui.readBioAr, ui.readBioEn)}
+          </button>
+        )}
       </div>
 
       <h3>
@@ -96,25 +104,12 @@ function MemberCard({ member, lang }: { member: Member; lang: Lang }) {
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`${key} — ${name}`}
+              aria-label={`${SOCIAL_LABELS[key]} — ${name}`}
             >
-              {SOCIAL_ICONS[key]}
+              <SocialMark name={key} />
             </a>
           ))}
         </div>
-      )}
-
-      {/* Touch devices have no hover, so the bio needs a real control. */}
-      {bio && (
-        <button
-          className="card__toggle"
-          type="button"
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-          data-ripple
-        >
-          {pick(lang, ui.readBioAr, ui.readBioEn)}
-        </button>
       )}
     </article>
   );

@@ -13,7 +13,6 @@ export const ui = {
   navAr: {
     about: 'من نحن',
     gains: 'ماذا تكسب',
-    program: 'البرنامج',
     journey: 'مسيرتنا',
     team: 'الفريق',
     join: 'انضم إلينا',
@@ -21,7 +20,6 @@ export const ui = {
   navEn: {
     about: 'About',
     gains: 'What you gain',
-    program: 'Programme',
     journey: 'Journey',
     team: 'Team',
     join: 'Join us',
@@ -33,6 +31,8 @@ export const ui = {
   readBioAr: 'النبذة',
   readBioEn: 'Read bio',
 
+  /* Used only by the parked Programme section. Kept so bringing it back is
+     one import and one line — see the note in components/HomeSections.tsx. */
   showAllAr: 'عرض الكل',
   showAllEn: 'Show all',
 
@@ -52,4 +52,4 @@ export const ui = {
 
 export type NavKey = keyof typeof ui.navAr;
 
-export const NAV_ORDER: NavKey[] = ['about', 'gains', 'program', 'journey', 'team', 'join'];
+export const NAV_ORDER: NavKey[] = ['about', 'gains', 'journey', 'team', 'join'];

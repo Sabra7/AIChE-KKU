@@ -1,5 +1,6 @@
 /**
- * Partner organisations. Logo and name only — no links, no blurbs, no counts.
+ * Partner organisations. Logo, name, and their official accounts — no blurbs,
+ * no counts.
  *
  * These marks belong to other organisations, so the section renders them with
  * `object-fit: contain`: a logo is never cropped and never stretched to match
@@ -15,11 +16,19 @@
  * A white-on-transparent logo disappears on --bg.
  */
 
+import type { SocialKey } from '@/lib/socials';
+
 export interface Partner {
   id: string;      // unique, lowercase, no spaces
   nameAr: string;
   nameEn: string;
   logo: string;    // path under /partners
+  /**
+   * The partner's own accounts, same shape as a team member's `links`. Same
+   * rule too: only list a channel with a real URL behind it. Order here is the
+   * order they render in.
+   */
+  links?: Partial<Record<SocialKey, string>>;
 }
 
 // TODO: both logo files are stand-ins traced out of the screenshots the
@@ -36,11 +45,20 @@ export const partners: Partner[] = [
     nameAr: 'مركز مدار الفلك للتدريب',
     nameEn: 'Madar Al-Falak Training Center',
     logo: '/partners/madar-alfalak.png',
+    links: {
+      tiktok: 'https://www.tiktok.com/@mafacadmy',
+      x: 'https://x.com/mafacadmy',
+      instagram: 'https://www.instagram.com/mafacadmy',
+    },
   },
   {
     id: 'bred-bakehouse',
     nameAr: 'برد بيك هاوس',
     nameEn: 'Bred Bakehouse',
     logo: '/partners/bred-bakehouse.png',
+    links: {
+      tiktok: 'https://www.tiktok.com/@bred_ksa',
+      maps: 'https://share.google/MklVbji5OaboVxBE4',
+    },
   },
 ];

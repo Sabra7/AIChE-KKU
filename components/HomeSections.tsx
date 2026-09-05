@@ -6,7 +6,6 @@ import Hero from './Hero';
 import Join from './Join';
 import Journey from './Journey';
 import Partners from './Partners';
-import Programme from './Programme';
 import Targets from './Targets';
 import Team from './Team';
 
@@ -26,7 +25,14 @@ export default function HomeSections({ lang }: { lang: Lang }) {
       <About lang={lang} />
       <Targets lang={lang} />
       <Gains lang={lang} />
-      <Programme lang={lang} />
+      {/*
+        Programme is parked, not deleted. It only had placeholder titles to
+        show, and a card reading "the rest load from workshops.ts" is internal
+        note, not copy for a visitor. components/Programme.tsx and
+        data/workshops.ts are untouched: once the real titles land, restore the
+        import and the line here, and put `program` back into ui.navAr/navEn
+        and NAV_ORDER in lib/ui.ts.
+      */}
       <Journey lang={lang} />
       <Gallery lang={lang} />
       <Team lang={lang} />

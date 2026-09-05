@@ -10,7 +10,10 @@
  * the deep-blue ground, which is a deliberate look, not a broken image.
  */
 
-export type SocialKey = 'linkedin' | 'github';
+/* The glyphs and the key union live in lib/socials.tsx — the team, the
+   partners and the chapter's own channels all draw from the same set. */
+export type { SocialKey } from '@/lib/socials';
+import type { SocialKey } from '@/lib/socials';
 
 export interface Member {
   id: string;

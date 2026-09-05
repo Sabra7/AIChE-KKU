@@ -1,5 +1,6 @@
+import type { DualDate as Dual } from '@/lib/dates';
 import { pick, type Lang } from '@/lib/i18n';
-import Num from './Num';
+import DualDate from './DualDate';
 import Reveal from './Reveal';
 
 /**
@@ -10,6 +11,9 @@ import Reveal from './Reveal';
 
 interface Beat {
   id: string;
+  /** Prefixes the title, in both calendars. The date is kept out of the title
+      string so <Num> can isolate it — an Arabic h3 will otherwise reorder it. */
+  date?: Dual;
   titleAr: string;
   titleEn: string;
   bodyAr: string;
@@ -28,12 +32,15 @@ const beats: Beat[] = [
   },
   {
     id: 'charter',
-    titleAr: '2021 — الاعتماد',
-    titleEn: '2021 — Chartered',
+    // July 2021 fell in Dhu al-Qi'dah / Dhu al-Hijjah 1442. The exact charter
+    // date is not known, so the copy names the year, never the Hijri month.
+    date: { greg: '2021', hijri: '1442' },
+    titleAr: 'الاعتماد',
+    titleEn: 'Chartered',
     bodyAr:
-      'في يوليو 2021 اعتمد المعهد الأمريكي للمهندسين الكيميائيين الجامعة فرعًا طلابيًا رسميًا، ضمن المنطقة الدولية.',
+      'في يوليو 2021م الموافق 1442هـ اعتمد المعهد الأمريكي للمهندسين الكيميائيين الجامعة فرعًا طلابيًا رسميًا، ضمن المنطقة الدولية.',
     bodyEn:
-      'In July 2021 the American Institute of Chemical Engineers granted the university official Student Chapter status, within the International Region.',
+      'In July 2021 (1442 AH) the American Institute of Chemical Engineers granted the university official Student Chapter status, within the International Region.',
   },
   {
     id: 'aim',
@@ -73,13 +80,12 @@ export default function About({ lang }: { lang: Lang }) {
           {beats.map((b) => (
             <Reveal as="li" key={b.id} className="beat">
               <h3>
-                {b.id === 'charter' && lang === 'ar' ? (
+                {b.date && (
                   <>
-                    <Num>2021</Num> — الاعتماد
+                    <DualDate lang={lang} date={b.date} inline /> —{' '}
                   </>
-                ) : (
-                  pick(lang, b.titleAr, b.titleEn)
                 )}
+                {pick(lang, b.titleAr, b.titleEn)}
               </h3>
               <p>{pick(lang, b.bodyAr, b.bodyEn)}</p>
             </Reveal>

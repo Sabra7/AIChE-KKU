@@ -106,6 +106,20 @@ a{ color:inherit; }
 /* Numerals must never be reordered by the bidi algorithm */
 .num{ display:inline-block; direction:ltr; unicode-bidi:isolate; font-family:var(--font-en); }
 
+/* Hijri + Gregorian together — see components/DualDate.tsx.
+   Sized in `em`, not `rem`, so the Hijri line stays in proportion whether it
+   sits under a timeline card's --t-lg label or under a section heading. */
+.dual{
+  display:inline-flex; flex-direction:column; align-items:start;
+  line-height:1.15; vertical-align:baseline;
+}
+/* Inline form sits inside running text, so it must not impose its own leading. */
+.dual--inline{ display:inline; line-height:inherit; }
+/* One wrapper per line. A loose suffix would become its own flex item and
+   drop the م onto a line by itself — see the note in DualDate.tsx. */
+.dual__g{ white-space:nowrap; }
+.dual__h{ font-size:.62em; font-weight:600; color:var(--ink-2); margin-top:.15em; white-space:nowrap; }
+
 ::selection{ background:var(--accent); color:var(--ink); }
 
 :focus-visible{
@@ -121,10 +135,10 @@ a{ color:inherit; }
 }
 
 .skip{
-  position:absolute; inset-inline-start:-9999px; top:0; z-index:200;
+  position:absolute; inset-inline-start:0; top:-100px; z-index:200;
   background:var(--ink); color:var(--bg); padding:.7rem 1.2rem;
 }
-.skip:focus{ inset-inline-start:0; }
+.skip:focus{ top:0; }
 
 /* ===========================================================================
    SECTION ENTRANCE  —  one shared IntersectionObserver + CSS transition.
@@ -295,6 +309,11 @@ a{ color:inherit; }
   margin-bottom:1.5rem;
 }
 html[lang="en"] .hero h1{ max-width:15ch; }
+/* The global 1.25 for headings is a Latin measure. At display size the Arabic
+   face hangs its dots and tails far enough below the baseline that they meet
+   the next line's letterforms — "في" over "في" here collides outright. Latin
+   keeps 1.25, where it reads correctly. */
+html[lang="ar"] .hero h1{ line-height:1.45; }
 
 /* Word-by-word rise. Each word has its own clipping box and its own delay,
    which is still ONE transition per word — no per-frame work anywhere. */
@@ -559,9 +578,29 @@ html[lang="en"] .hero h1{ max-width:15ch; }
 /* The counter overlays its own finished string, which is rendered invisibly
    underneath purely to hold the column width. Without it the five-column row
    re-lays-out on every frame of the count. */
-.cnt{ position:relative; display:block; }
+/* Ghost and value share one grid cell rather than the value being absolutely
+   positioned over it. A logical inset on an absolutely positioned box does not
+   reliably follow its block's direction, which left the live figure pinned to
+   the far edge of an RTL cell. Stacked in the same cell the two inherit the
+   same text alignment and stay exactly on top of each other in both
+   languages, and the column is still sized by the finished string. */
+/* justify-items:start places both spans at the grid's inline-start, which
+   follows the page direction — right in Arabic, left in English — while each
+   span keeps direction:ltr internally so the digits themselves stay in order. */
+.cnt{ position:relative; display:grid; justify-items:start; }
 .cnt__ghost{ visibility:hidden; }
-.cnt__v{ position:absolute; inset-inline-start:0; top:0; }
+.cnt__ghost,
+.cnt__v{ grid-area:1 / 1; }
+
+/* The figure is rendered with `fig__n num`, and .num's direction:ltr applied
+   to the whole block pinned the number to the left of an RTL cell while its
+   label stayed on the right — the two halves of one figure facing opposite
+   edges. What actually needs isolating is each string, so that "700+" cannot
+   render as "+700"; the block itself must follow the page. Latin pages are
+   unaffected: direction:inherit is ltr there either way. */
+.fig__n{ direction:inherit; }
+.fig__n .cnt__ghost,
+.fig__n .cnt__v{ direction:ltr; unicode-bidi:isolate; }
 
 .figs__foot{
   margin-top:1.8rem; padding-top:1.4rem;
@@ -570,7 +609,7 @@ html[lang="en"] .hero h1{ max-width:15ch; }
 }
 
 @media (max-width:900px){
-  .figs{ grid-template-columns:repeat(2,1fr); }
+  .figs{ grid-template-columns:repeat(2,minmax(0,1fr)); }
   .fig{ border-top:1px solid var(--rule); }
   .fig:nth-child(odd){ border-inline-start:0; }
   .fig:nth-child(1),.fig:nth-child(2){ border-top:0; }
@@ -644,6 +683,10 @@ html[lang="en"] .hero h1{ max-width:15ch; }
 @media (max-width:700px){
   .gain{ flex-direction:column; gap:.15rem; align-items:flex-start; }
   .gain__d{ max-width:38ch; }
+  /* align-self:center centres the icon vertically beside the word while the
+     row is horizontal. Once the row becomes a column that same rule centres
+     it horizontally, stranding it mid-screen away from its own word. */
+  .gain__i{ align-self:flex-start; }
 }
 
 /* Fallback list when the pin is disabled (small screens / reduced motion) */
@@ -696,7 +739,9 @@ html[lang="en"] .hero h1{ max-width:15ch; }
 .tl{ display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:1.5rem; }
 .tl__i{ padding-top:1.4rem; border-top:2px solid var(--rule-strong); }
 .tl__i--next{ border-top-color:var(--accent); }
-.tl__y{ font-family:var(--font-en); font-weight:700; font-size:var(--t-lg); display:block; margin-bottom:.5rem; }
+/* No font-family here: the label is a <DualDate>, whose numerals carry the
+   Latin face through .num while the هـ / م suffixes need the Arabic one. */
+.tl__y{ font-weight:700; font-size:var(--t-lg); display:block; margin-bottom:.5rem; }
 .tl__i--next .tl__y{ color:var(--green-deep); }
 .tl__i h3{ font-size:var(--t-base); margin-bottom:.4rem; }
 .tl__i p{ font-size:var(--t-sm); color:var(--ink-2); }
@@ -728,9 +773,14 @@ html[lang="en"] .hero h1{ max-width:15ch; }
 .gal .s2{ grid-column:span 2; aspect-ratio:4/3; }
 .gal .s6{ grid-column:span 6; aspect-ratio:21/8; }
 @media (max-width:820px){
-  .gal{ grid-template-columns:repeat(2,1fr); }
-  .gal .s3,.gal .s2{ grid-column:span 1; aspect-ratio:4/3; }
+  .gal{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+  /* Portrait, not landscape. In a ~168px column a 4/3 frame is only ~126px
+     tall, and the always-on touch caption (see the hover:none rule above)
+     covers most of it — a photo section showing barely any photo. The taller
+     frame gives the image back its space and leaves the caption a footer. */
+  .gal .s3,.gal .s2{ grid-column:span 1; aspect-ratio:3/4; }
   .gal .s6{ grid-column:span 2; aspect-ratio:16/9; }
+  .gal figcaption{ padding:1.4rem .7rem .6rem; font-size:.72rem; line-height:1.45; }
 }
 
 /* ===========================================================================
@@ -755,6 +805,13 @@ html[lang="en"] .hero h1{ max-width:15ch; }
 .sup h3{ font-size:var(--t-lg); margin-bottom:.3rem; }
 .sup__sub{ font-size:var(--t-sm); color:var(--ink-2); }
 
+/* At 390px the fixed 132px portrait leaves the text column ~138px, which
+   breaks the affiliation line into a ragged stack. Narrow the portrait
+   instead of stacking the card — the horizontal read is the point of it. */
+@media (max-width:560px){
+  .sup{ grid-template-columns:104px 1fr; gap:1.1rem; padding:1.2rem; }
+}
+
 .grp{ margin-bottom:clamp(3rem,6vw,4.5rem); }
 .grp__t{
   font-size:var(--t-sm); font-weight:600; color:var(--ink-2);
@@ -762,9 +819,13 @@ html[lang="en"] .hero h1{ max-width:15ch; }
   border-bottom:1px solid var(--rule);
 }
 
-.team{ display:grid; grid-template-columns:repeat(4,1fr); gap:clamp(1rem,2.5vw,1.8rem); }
-@media (max-width:1000px){ .team{ grid-template-columns:repeat(3,1fr); } }
-@media (max-width:700px){ .team{ grid-template-columns:repeat(2,1fr); } }
+.team{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:clamp(1rem,2.5vw,1.8rem); }
+/* minmax(0,…) rather than a bare 1fr: the photo box is an aspect-ratio
+   element with a ~219px min-content width, and a plain 1fr track will not go
+   below that. On a phone the two tracks then added up to more than the shell
+   and shoved the entire page 84px sideways, clipping the menu button. */
+@media (max-width:1000px){ .team{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:700px){ .team{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
 
 .card{ display:flex; flex-direction:column; }
 
@@ -843,17 +904,38 @@ html[lang="en"] .hero h1{ max-width:15ch; }
 
 /* Touch devices have no hover, so the bio needs a real, tappable control.
    It is a chip rather than an underlined word: 44px is easier to hit and the
-   ripple gives the tap the feedback a hover state would otherwise carry. */
+   ripple gives the tap the feedback a hover state would otherwise carry.
+
+   It rides in the frame's bottom corner, over the photo it acts on. Logical
+   insets, so it tucks into the start corner in both trees. z-index clears the
+   veil and the bio, which are painted by the same stacking context — without
+   it the open state would drop the control behind its own overlay. */
 .card__toggle{
-  display:none; position:relative; overflow:hidden; isolation:isolate;
-  background:none; border:1px solid var(--rule-strong);
-  border-radius:999px; padding:.4rem 1rem; margin-top:.7rem;
-  font:inherit; font-size:var(--t-xs); color:var(--ink-2);
-  cursor:pointer; min-height:44px; align-self:flex-start;
-  transition:border-color .25s var(--ease), color .25s var(--ease);
+  display:none; position:absolute; z-index:3;
+  inset-block-end:.75rem; inset-inline-start:.75rem;
+  overflow:hidden; isolation:isolate;
+  border:1px solid rgba(13,62,107,.18);
+  border-radius:999px; padding:.4rem 1rem;
+  font:inherit; font-size:var(--t-xs); color:var(--ink);
+  cursor:pointer; min-height:44px;
+  /* Frosted rather than solid: it has to stay legible over a dark suit and a
+     pale studio backdrop alike, without hiding the face behind it. */
+  background:rgba(251,249,247,.82);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  box-shadow:0 4px 14px -6px rgba(6,28,49,.45);
+  transition:border-color .25s var(--ease), color .25s var(--ease),
+             background-color .25s var(--ease);
 }
-.card__toggle[aria-expanded="true"]{ border-color:var(--accent); color:var(--green-deep); }
-@media (hover:none){ .card__toggle{ display:inline-flex; align-items:center; } }
+.card__toggle[aria-expanded="true"]{
+  border-color:var(--accent); color:var(--green-deep);
+  background:rgba(251,249,247,.94);
+}
+@media (hover:none){
+  .card__toggle{ display:inline-flex; align-items:center; }
+  /* Clear the chip's 44px + inset, so the open bio never runs underneath it. */
+  .card__bio{ padding-block-end:4rem; }
+}
 
 /* ===========================================================================
    PARTNERS  —  logos only, no links, no motion
@@ -889,6 +971,21 @@ html[lang="en"] .hero h1{ max-width:15ch; }
 .prt__logo img{ object-fit:contain; padding:1.2rem; }
 
 .prt__name{ font-size:var(--t-sm); color:var(--ink-2); }
+
+/* The partner's own accounts. Centred, because .prt__item is centred — the
+   member card's equivalent is start-aligned to match its own text block.
+   Negative block margin absorbs the 44px target's slack so the row does not
+   push a visual gap under the name. */
+.prt__links{
+  display:flex; justify-content:center; gap:.15rem;
+  margin-block:-.35rem -.6rem;
+}
+.prt__links a{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:44px; height:44px;
+  color:var(--ink-2); transition:color .25s var(--ease);
+}
+.prt__links a:hover{ color:var(--green-deep); }
 
 /* ===========================================================================
    JOIN

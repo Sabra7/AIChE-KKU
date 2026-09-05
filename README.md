@@ -67,6 +67,13 @@ something has been added that should not have been.
 
 ### Add a workshop
 
+> **The Programme section is currently not rendered.** It had only placeholder
+> titles to show, so it is parked rather than deleted — `components/Programme.tsx`
+> and `data/workshops.ts` are intact. To bring it back once real titles exist:
+> restore the import and the `<Programme lang={lang} />` line in
+> `components/HomeSections.tsx`, then add `program` back to `navAr`, `navEn` and
+> `NAV_ORDER` in `lib/ui.ts`. Nothing else is needed — the CSS never left.
+
 Open `data/workshops.ts` and add an entry to the `workshops` array:
 
 ```ts
@@ -150,7 +157,7 @@ an archive.
 data/         all content — edit these
   site.ts       identity, social links, the join form URL
   team.ts       supervisor, leadership, committee heads
-  workshops.ts  workshops and courses
+  workshops.ts  workshops and courses (section parked — see "Add a workshop")
   gallery.ts    curated photos
   timeline.ts   milestones
   targets.ts    the numbers (read the note at the top of this one)
@@ -158,6 +165,7 @@ data/         all content — edit these
 lib/
   i18n.tsx      Lang type, dirOf, pick(ar, en), route helpers
   ui.ts         every repeated interface string, including the join CTA
+  dates.ts      the DualDate type and its flat-string form
   fonts.ts      next/font setup
 
 components/   one file per section, plus small shared pieces
@@ -167,7 +175,7 @@ app/
   globals.css   design tokens and the bespoke component styles
 ```
 
-### Two rules worth keeping
+### Three rules worth keeping
 
 **The join CTA is defined once.** Its label is `ui.joinCtaAr` / `ui.joinCtaEn`
 in `lib/ui.ts` and its URL is `joinUrl` in `data/site.ts`. It renders in four
@@ -177,6 +185,19 @@ places. Change it in those two spots and every instance follows.
 will otherwise render `30+` as `+30` and can reverse a range like `2026/2027`.
 `components/Num.tsx` isolates the numeral so that cannot happen. This includes
 years.
+
+**Every date carries both calendars.** Hijri and Gregorian, through
+`components/DualDate.tsx`. Store the pair as a `DualDate` (`lib/dates.ts`) in
+the data file — **numerals only, no suffix** — and let the component add `هـ`
+and `م`. That split is not cosmetic: `.num` forces the Latin font face, so a
+suffix wrapped inside `<Num>` would draw an Arabic letter in a Latin face.
+
+The component has two shapes. Stacked (the default) puts the Hijri beneath the
+Gregorian in smaller, quieter type — use it where the date stands alone as its
+own element, like a timeline card's label. Inline gives `2021م (1442هـ)` on one
+line — use it inside a running sentence, where a second line would break the
+paragraph. Where JSX cannot go, `alt` above all, `dualText(lang, date)` returns
+the same thing as a flat string.
 
 ---
 
@@ -203,8 +224,12 @@ Search the codebase for `TODO` to find these in place.
   below the minimum and visibly soft on desktop — `data/team.ts`
 - English bios for Firas, Tasneem, Anas and Abdulmalik were drafted from the
   Arabic rather than written by them, and are marked `TODO review`
-- The real workshop titles — `data/workshops.ts`
+- The real workshop titles — `data/workshops.ts`. The Programme section stays
+  parked until these arrive; see "Add a workshop" above.
 - Confirmation of the 1447 recognition wording — `data/timeline.ts`
+- The month SEESC 2025 was held — `data/timeline.ts`. 1446 AH ran to 25 June
+  2025 and 1447 began the next day, so the month decides the Hijri year. The
+  label carries `1446/1447` until someone confirms it.
 - The production domain in `metadataBase` — both files in `app/`
 
 ---

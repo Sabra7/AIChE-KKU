@@ -1,6 +1,6 @@
 import { pick, type Lang } from '@/lib/i18n';
 import { timeline } from '@/data/timeline';
-import Num from './Num';
+import DualDate from './DualDate';
 import Reveal from './Reveal';
 
 /**
@@ -23,9 +23,21 @@ export default function Journey({ lang }: { lang: Lang }) {
               className={`tl__i${m.next ? ' tl__i--next' : ''}`}
             >
               <span className="tl__y">
-                {m.next ? pick(lang, m.labelAr, m.labelEn) : <Num>{pick(lang, m.labelAr, m.labelEn)}</Num>}
+                {m.date ? (
+                  <DualDate lang={lang} date={m.date} />
+                ) : (
+                  pick(lang, m.labelAr, m.labelEn)
+                )}
               </span>
-              <h3>{pick(lang, m.titleAr, m.titleEn)}</h3>
+              <h3>
+                {pick(lang, m.titleAr, m.titleEn)}
+                {m.titleDate && (
+                  <>
+                    {' '}
+                    <DualDate lang={lang} date={m.titleDate} inline />
+                  </>
+                )}
+              </h3>
               <p>{pick(lang, m.bodyAr, m.bodyEn)}</p>
             </Reveal>
           ))}
