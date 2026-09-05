@@ -63,7 +63,15 @@ export const leadership: Member[] = [
     bioEn:
       'A leader and an aspiring chemical engineer, building real value in every experience I take on — with continuous learning and achievement as a firm goal toward lasting impact.',
     photo: '/team/abdullah_alghanom.jpg',
-    links: { linkedin: 'https://www.linkedin.com/in/alghanom-ia' },
+    // Published by Abdullah himself on his public Linktree, and added here
+    // with his agreement. Personal contact details go on a member's card only
+    // on that basis — see the note in SECURITY.md.
+    links: {
+      linkedin: 'https://www.linkedin.com/in/alghanom-ia',
+      x: 'https://x.com/Ab_iW0',
+      whatsapp: 'https://wa.me/966556915969',
+      email: 'mailto:abdullah.alghanom1@gmail.com',
+    },
   },
   {
     id: 'firas',
@@ -167,8 +175,8 @@ export const committees: Member[] = [
   },
   {
     id: 'yazan',
-    nameAr: 'يزن عسيري',
-    nameEn: 'Yazan Asiri',
+    nameAr: 'يزن بن ناجد',
+    nameEn: 'Yazan bin Najd',
     roleAr: 'لجنة إدارة الفعاليات',
     roleEn: 'Events Management',
     majorAr: 'هندسة كيميائية',
@@ -199,6 +207,7 @@ export const committees: Member[] = [
     links: {
       linkedin:
         'https://www.linkedin.com/in/%D8%A3%D9%86%D8%B3-%D8%A7%D9%84%D9%85%D8%B4%D9%87%D9%88%D8%B1%D9%8A-63241735a',
+      x: 'https://x.com/anasbinsaad21',
     },
   },
   {

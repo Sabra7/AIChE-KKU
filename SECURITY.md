@@ -62,15 +62,31 @@ notice for that data is Google's and the chapter's, not this repository's.
 
 ## Sensitive data handling
 
-There is none, by design.
+No credentials, no secrets, and nothing a visitor submits — the site collects
+nothing. What it does carry is other people's personal information, published
+on purpose.
 
-The repository does contain personal information that was **published with
+The repository contains personal information that was **published with
 consent**: team members' names, roles, majors, self-written biographies and the
 public profile links they supplied, plus their portrait photographs under
-`public/team/`. Treat additions the same way — a member's entry in
-`data/team.ts` is public the moment it merges. Never add a phone number, a
-personal email address, a student ID, or a link the person did not offer for
-publication.
+`public/team/`.
+
+That set now includes **direct contact details** — the chapter President's
+WhatsApp number and personal email, both taken from the public Linktree he
+publishes himself and added at his request. This is a deliberate exception,
+not the default, and it carries a real cost: a page that is indexed by search
+engines is also harvested by address scrapers, and a `mailto:` or a `wa.me`
+link in the HTML is the easiest thing on the internet to scrape. Nothing here
+obfuscates them, because obfuscation that survives a headless browser does not
+exist.
+
+**The rule for additions:** a member's entry in `data/team.ts` is public the
+moment it merges. Add a phone number or a personal email **only** when that
+member has already published it themselves and has asked for it to appear here
+— and record that basis in a comment beside the entry, as Abdullah's does.
+Never add a student ID, a home address, or any link the person did not offer
+for publication. When the chapter finally has an official inbox, prefer it over
+anyone's personal address.
 
 `app/(ar)/layout.tsx` and `app/(en)/layout.tsx` both carry a Google Search
 Console `verification` token. **That is not a secret.** It is published as a

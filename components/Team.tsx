@@ -98,17 +98,23 @@ function MemberCard({ member, lang }: { member: Member; lang: Lang }) {
       {/* Icons sit below the role, never over the photo, at a 44px target. */}
       {links.length > 0 && (
         <div className="card__links">
-          {links.map(([key, url]) => (
-            <a
-              key={key}
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`${SOCIAL_LABELS[key]} — ${name}`}
-            >
-              <SocialMark name={key} />
-            </a>
-          ))}
+          {links.map(([key, url]) => {
+            // A mailto: has nothing to open in a new tab; Chrome hands back a
+            // blank one and leaves it there. target/rel belong on real
+            // navigations only, which is also the only place noopener matters.
+            const external = url.startsWith('http');
+            return (
+              <a
+                key={key}
+                href={url}
+                target={external ? '_blank' : undefined}
+                rel={external ? 'noopener noreferrer' : undefined}
+                aria-label={`${SOCIAL_LABELS[key]} — ${name}`}
+              >
+                <SocialMark name={key} />
+              </a>
+            );
+          })}
         </div>
       )}
     </article>
