@@ -6,6 +6,15 @@
  * document. Where a fact is still unconfirmed it carries a TODO.
  */
 
+/**
+ * Canonical origin of the deployed site. Everything that needs an absolute
+ * URL — metadataBase in both root layouts, the sitemap and robots — reads it
+ * from here, so moving the site is a one-line change.
+ *
+ * TODO: real domain. Swapping this value is the whole migration.
+ */
+export const siteUrl = 'https://aiche-kku.vercel.app';
+
 export const site = {
   nameEn: 'AIChE-KKU',
   nameAr: 'AIChE — الفرع الطلابي بجامعة الملك خالد',

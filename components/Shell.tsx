@@ -19,10 +19,26 @@ import PointerMotion from './PointerMotion';
  *
  * Both root layouts render this component, so there is one shell, not two.
  */
-export default function Shell({ lang, children }: { lang: Lang; children: ReactNode }) {
+export default function Shell({
+  lang,
+  jsonLd,
+  children,
+}: {
+  lang: Lang;
+  /** Structured data for this tree; serialised into a ld+json script. */
+  jsonLd?: object;
+  children: ReactNode;
+}) {
   return (
     <html lang={lang} dir={dirOf(lang)} className={fontVars}>
       <body>
+        {jsonLd && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          />
+        )}
+
         <a className="skip" href="#main">
           {pick(lang, ui.skipAr, ui.skipEn)}
         </a>
