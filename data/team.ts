@@ -39,9 +39,9 @@ export interface Member {
 /** Academic supervision. Named first in the team section. */
 export const supervisor = {
   // TODO: confirm the exact academic rank (Dr. / Associate Professor /
-  // Professor) and the English spelling of the surname.
-  nameAr: 'د. حسين الصوان',
-  nameEn: 'Dr. Hussein Alsawan',
+  // Professor).
+  nameAr: 'د. حسين آل صوان',
+  nameEn: 'Dr. Hussein Al Sawan',
   roleAr: 'الإشراف الأكاديمي',
   roleEn: 'Academic supervision',
   affiliationAr: 'قسم الهندسة الكيميائية — جامعة الملك خالد',
