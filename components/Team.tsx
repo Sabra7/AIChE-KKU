@@ -18,9 +18,23 @@ const initialsOf = (name: string) =>
     .map((w) => w[0])
     .join('');
 
-function MemberCard({ member, lang }: { member: Member; lang: Lang }) {
-  const [open, setOpen] = useState(false);
-
+/**
+ * `open` is owned by <Team>, not by the card, so that opening one bio closes
+ * whichever was open before. Two cards holding their own booleans left every
+ * bio the visitor had ever tapped stacked open behind each other.
+ */
+function MemberCard({
+  member,
+  lang,
+  open,
+  onToggle,
+}: {
+  member: Member;
+  lang: Lang;
+  open: boolean;
+  /** Pass a member id to open it, or null to close whatever is open. */
+  onToggle: (id: string | null) => void;
+}) {
   if (member.soon) {
     return (
       <article className="card">
@@ -75,7 +89,7 @@ function MemberCard({ member, lang }: { member: Member; lang: Lang }) {
             className="card__toggle"
             type="button"
             aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
+            onClick={() => onToggle(open ? null : member.id)}
             data-ripple
           >
             {pick(lang, ui.readBioAr, ui.readBioEn)}
@@ -123,6 +137,8 @@ function MemberCard({ member, lang }: { member: Member; lang: Lang }) {
 
 export default function Team({ lang }: { lang: Lang }) {
   const rootRef = useRef<HTMLElement>(null);
+  // One bio at a time, across both groups.
+  const [openBio, setOpenBio] = useState<string | null>(null);
 
   /**
    * Give every photo frame the same height, sized to the longest bio, so a
@@ -139,6 +155,35 @@ export default function Team({ lang }: { lang: Lang }) {
     const tallest = Math.max(...bios.map((b) => b.scrollHeight));
     frames.forEach((f) => (f.style.minHeight = `${tallest + 36}px`));
   }, []);
+
+  /**
+   * Tap anywhere outside the open card to close its bio.
+   *
+   * `pointerdown` rather than `click` so this settles before a tap on another
+   * card's toggle runs: this clears the open id, then that button's onClick
+   * sets its own — so the tapped bio opens instead of merely closing the last.
+   *
+   * A tap inside the open card is left alone. The bio covers the whole frame,
+   * so "inside" means the visitor is reading it; only its own button closes it.
+   */
+  useEffect(() => {
+    if (!openBio) return;
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.target instanceof Element && e.target.closest('.card.open')) return;
+      setOpenBio(null);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenBio(null);
+    };
+
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [openBio]);
 
   useEffect(() => {
     let alive = true;
@@ -206,7 +251,13 @@ export default function Team({ lang }: { lang: Lang }) {
           </Reveal>
           <div className="team">
             {leadership.map((m) => (
-              <MemberCard key={m.id} member={m} lang={lang} />
+              <MemberCard
+                key={m.id}
+                member={m}
+                lang={lang}
+                open={openBio === m.id}
+                onToggle={setOpenBio}
+              />
             ))}
           </div>
         </div>
@@ -217,7 +268,13 @@ export default function Team({ lang }: { lang: Lang }) {
           </Reveal>
           <div className="team">
             {committees.map((m) => (
-              <MemberCard key={m.id} member={m} lang={lang} />
+              <MemberCard
+                key={m.id}
+                member={m}
+                lang={lang}
+                open={openBio === m.id}
+                onToggle={setOpenBio}
+              />
             ))}
           </div>
         </div>

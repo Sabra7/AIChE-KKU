@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 
 import Shell from '@/components/Shell';
 import { site, siteUrl } from '@/data/site';
@@ -40,6 +40,15 @@ export const metadata: Metadata = {
     // The token only — Next wraps it in the meta tag itself.
     google: 'wIE6QzaD2FwUCRpzzJuGLDeLX_jgqAm9pWwIbXHex9A',
   },
+};
+
+/**
+ * Mirrors --bg in app/globals.css. Safari and Chrome tint the browser chrome
+ * with this, so the address bar reads as part of the page instead of a grey
+ * band above it. Change it here and in globals.css together.
+ */
+export const viewport: Viewport = {
+  themeColor: '#F5F1EE',
 };
 
 export default function EnglishRootLayout({ children }: { children: React.ReactNode }) {

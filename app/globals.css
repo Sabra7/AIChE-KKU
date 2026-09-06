@@ -193,7 +193,17 @@ a{ color:inherit; }
 .hdr{
   position:fixed; inset-inline:0; top:0; z-index:100;
   background:rgba(245,241,238,.82);
+  /* Prefix written by hand: Safari only took the unprefixed property in 18.0,
+     and autoprefixer's targets start at iOS 18, so it adds nothing. Without
+     this an iPhone on iOS 17 or older gets a flat translucent bar with the
+     page scrolling through it, unblurred.
+
+     The order matters and is not stylistic: autoprefixer's cleanup pass
+     deletes a -webkit- line that PRECEDES the standard property, treating it
+     as its own stale output. Written after, it survives. Keep this pair in
+     this order, and .card__toggle's for the same reason. */
   backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
   border-bottom:1px solid transparent;
   transition:border-color .3s var(--ease);
 }
@@ -388,6 +398,11 @@ a{ color:inherit; }
    =========================================================================== */
 .hero{
   position:relative; padding-top:var(--hdr-h);
+  /* svh is what keeps the hero from jumping as mobile browser chrome grows and
+     shrinks, but it needs iOS 15.4. The vh line above it is the fallback an
+     older iPhone takes — without one the whole declaration is invalid there
+     and the hero collapses to its content. */
+  min-height:min(100vh, 860px);
   min-height:min(100svh, 860px);
   display:flex; align-items:center;
   overflow:hidden;
@@ -743,6 +758,7 @@ html[lang="ar"] .hero h1{ line-height:1.45; }
 .gains__track{ position:relative; }
 .gains__pin{
   position:sticky; top:0;
+  height:100vh;   /* fallback for iOS < 15.4 — see the note on .hero */
   height:100svh;
   display:flex; align-items:flex-start;
   overflow:hidden;
@@ -1107,7 +1123,9 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
   );
   opacity:0; transition:opacity .4s var(--ease);
 }
-.card:hover .card__sheen{ opacity:1; }
+@media (hover:hover){
+  .card:hover .card__sheen{ opacity:1; }
+}
 .card__bio{
   position:absolute; inset:0;
   display:flex; align-items:center;
@@ -1116,12 +1134,20 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
   opacity:0; transition:opacity .4s var(--ease);
   overflow:hidden;
 }
-.card:hover .card__ph img,
+/* `.open` is the state the toggle button drives, and it works everywhere.
+   `:hover` is fenced off behind (hover:hover) on purpose: a touch browser
+   leaves :hover stuck on whatever was last tapped, so on a phone the bio stayed
+   visible after the button had already set open=false — the second tap looked
+   like it did nothing. Only a real pointer gets the hover reveal. */
 .card.open .card__ph img{ filter:blur(5px); }
-.card:hover .card__veil,
 .card.open .card__veil,
-.card:hover .card__bio,
 .card.open .card__bio{ opacity:1; }
+
+@media (hover:hover){
+  .card:hover .card__ph img{ filter:blur(5px); }
+  .card:hover .card__veil,
+  .card:hover .card__bio{ opacity:1; }
+}
 
 .card__initials{
   position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
@@ -1141,8 +1167,13 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
 .card__flag{ font-size:var(--t-xs); color:var(--green-mid); font-weight:600; margin-top:.2rem; }
 .card__code{ font-family:var(--font-en); color:var(--green-mid); font-weight:500; }
 
-/* Icons sit under the role, never on the photo. 44px touch targets. */
-.card__links{ display:flex; gap:.15rem; margin-top:.5rem; }
+/* Icons sit under the role, never on the photo. 44px touch targets.
+
+   flex-wrap is what protects that 44px. Four icons need ~146px and a card in
+   the two-up phone grid is ~132px at 320px wide; without wrapping the boxes
+   shrink to fit and the target goes with them. Wrapping costs nothing on the
+   cards that fit, which is all of them above ~355px. */
+.card__links{ display:flex; flex-wrap:wrap; gap:.15rem; margin-top:.5rem; }
 .card__links a{
   display:inline-flex; align-items:center; justify-content:center;
   width:44px; height:44px; margin-inline-start:-.55rem;
