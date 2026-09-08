@@ -148,8 +148,8 @@ export const committees: Member[] = [
     id: 'ayman',
     nameAr: 'أيمن عسيري',
     nameEn: 'Ayman Asiri',
-    roleAr: 'اللجنة العلمية والإبداعية',
-    roleEn: 'Scientific & Creative',
+    roleAr: 'لجنة البحث العلمية',
+    roleEn: 'Scientific Research',
     majorAr: 'هندسة كيميائية',
     majorEn: 'Chemical Engineering',
     bioAr:
