@@ -208,7 +208,7 @@ a{ color:inherit; }
      The order matters and is not stylistic: autoprefixer's cleanup pass
      deletes a -webkit- line that PRECEDES the standard property, treating it
      as its own stale output. Written after, it survives. Keep this pair in
-     this order. */
+     this order, and .card__toggle's for the same reason. */
   backdrop-filter:blur(14px);
   -webkit-backdrop-filter:blur(14px);
   border-bottom:1px solid transparent;
@@ -1105,15 +1105,7 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
    blur() is NOT animated frame by frame: it is a single small static value
    that transitions once. The white veil and the bio move on opacity alone.
    That is what holds 60fps -- one short transition of a static value, not a
-   per-frame animation the compositor has to be warned about.
-
-   Nothing inside this frame may hold a composited layer at rest. The frame
-   clips with overflow:hidden + border-radius, and iOS Safari scrolls on the
-   UI process: a layer inside a clipped ancestor keeps the position and the
-   clip of the last main-thread commit, so during a momentum scroll it rides
-   several frames behind the content and paints outside the frame, over the
-   next card. It settles the moment the scroll stops, which is what makes it
-   look like a glitch rather than a layout bug. */
+   per-frame animation the compositor has to be warned about. */
 .card__ph{
   position:relative; aspect-ratio:3/4; overflow:hidden;
   border-radius:var(--r-lg);
@@ -1125,13 +1117,11 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
 }
 .card__ph img{
   width:100%; height:100%; object-fit:cover; display:block;
-  /* No filter at rest -- not will-change:filter, and not filter:blur(0px)
-     either. Both promote: an identity filter is still a filter, and WebKit
-     renders any filtered element through its own surface, which is exactly
-     the layer this frame's rounded overflow then fails to clip mid-scroll.
-     `none` is not a special case for the transition: a filter list
-     interpolates from `none` as if every function sat at its initial value,
-     so none -> blur(5px) animates identically to the old 0px -> 5px. */
+  filter:blur(0px);
+  /* will-change:filter was here. It pinned all ~20 photos to their own
+     compositor layers for the whole life of the page, and a promoted layer is
+     precisely what iOS WebKit failed to clip to this frame's rounded overflow.
+     A 0->5px blur transitions fine without the hint. */
   transition:filter .4s var(--ease);
 }
 .card__veil{
@@ -1223,27 +1213,18 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
   border-radius:999px; padding:.4rem 1rem;
   font:inherit; font-size:var(--t-xs); color:var(--ink);
   cursor:pointer; min-height:44px;
-  /* Near-opaque rather than frosted. It still has to stay legible over a dark
-     suit and a pale studio backdrop alike, and at .94 it is -- but it gets
-     there on alpha alone.
-
-     backdrop-filter:blur(10px) was here, and this chip only renders under
-     (hover:none), so it was iOS and nothing else. A backdrop-filter has to
-     sample its backdrop root, and .card__ph is one (isolation:isolate is on
-     the backdrop-root list): WebKit therefore had to render the whole photo
-     frame into a composited buffer, on every card, purely to blur what is
-     behind a 44px chip. That is the second layer this frame's clip could not
-     hold during a momentum scroll. */
-  background:rgba(251,249,247,.94);
+  /* Frosted rather than solid: it has to stay legible over a dark suit and a
+     pale studio backdrop alike, without hiding the face behind it. */
+  background:rgba(251,249,247,.82);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
   box-shadow:0 4px 14px -6px rgba(6,28,49,.45);
   transition:border-color .25s var(--ease), color .25s var(--ease),
              background-color .25s var(--ease);
 }
 .card__toggle[aria-expanded="true"]{
   border-color:var(--accent); color:var(--green-deep);
-  /* Fully opaque, so the open state still reads as a step up from the rest
-     chip now that the rest chip is itself near-opaque. */
-  background:var(--surface);
+  background:rgba(251,249,247,.94);
 }
 @media (hover:none){
   .card__toggle{ display:inline-flex; align-items:center; }
