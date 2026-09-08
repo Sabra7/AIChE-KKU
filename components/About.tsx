@@ -53,11 +53,12 @@ const beats: Beat[] = [
   },
   {
     id: 'impact',
-    titleAr: 'الأثر',
-    titleEn: 'The impact',
-    bodyAr: 'ورش ودورات وزيارات ومعارض ومؤتمرات، وحضور ثابت في كلية الهندسة على شطريها.',
+    titleAr: 'الأثر — ورش هندسة كيميائية في أبها',
+    titleEn: 'The impact — chemical engineering workshops in Abha',
+    bodyAr:
+      'ورش ودورات وزيارات صناعية ومعارض ومؤتمرات، وحضور ثابت في كلية الهندسة على شطريها.',
     bodyEn:
-      'Workshops, courses, industry visits, expos and conferences — and a steady presence across both sections of the College of Engineering.',
+      'Workshops, courses, chemical engineering industry visits, expos and conferences — and a steady presence across both sections of the College of Engineering.',
   },
 ];
 
@@ -66,7 +67,13 @@ export default function About({ lang }: { lang: Lang }) {
     <section className="sect sect--tint" id="about">
       <div className="shell story">
         <Reveal className="story__stick">
-          <h2>{pick(lang, 'من نحن', 'Who we are')}</h2>
+          <h2>
+            {pick(
+              lang,
+              'من نحن — الفرع الطلابي لـ AIChE بجامعة الملك خالد',
+              'Who we are — the AIChE student chapter at KKU',
+            )}
+          </h2>
           <p>
             {pick(
               lang,

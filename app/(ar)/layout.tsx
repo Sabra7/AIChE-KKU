@@ -6,8 +6,10 @@ import { organizationJsonLd } from '@/lib/jsonld';
 
 import '../globals.css';
 
+const title = 'AIChE KKU — الفرع الطلابي للهندسة الكيميائية بجامعة الملك خالد';
+
 const description =
-  'الفرع الطلابي للمعهد الأمريكي للمهندسين الكيميائيين بجامعة الملك خالد — أبها. ورش ودورات وفعاليات تربط الطلاب بشبكة عالمية في أكثر من 110 دول.';
+  'الفرع الطلابي للمعهد الأمريكي للمهندسين الكيميائيين AIChE بجامعة الملك خالد في أبها. ورش تقنية ودورات هندسية وزيارات صناعية تربط طلاب قسم الهندسة الكيميائية بشبكة عالمية في أكثر من 110 دول.';
 
 /**
  * Root layout for the Arabic tree, served at `/`.
@@ -15,14 +17,14 @@ const description =
  */
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: site.nameAr,
+  title,
   description,
   alternates: {
     canonical: '/',
     languages: { ar: '/', en: '/en' },
   },
   openGraph: {
-    title: site.nameAr,
+    title,
     description: site.tagline,
     locale: 'ar_SA',
     type: 'website',
@@ -31,7 +33,7 @@ export const metadata: Metadata = {
     // The share image is a 1200x630 banner, not an avatar; `summary` would
     // crop it to a square thumbnail and throw away most of it.
     card: 'summary_large_image',
-    title: site.nameAr,
+    title,
     description,
   },
   verification: {

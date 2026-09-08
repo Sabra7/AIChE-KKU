@@ -63,7 +63,7 @@ function MemberCard({
         {member.photo ? (
           <Image
             src={member.photo}
-            alt={name}
+            alt={`${name} — ${pick(lang, member.roleAr, member.roleEn)}`}
             fill
             sizes="(max-width: 700px) 50vw, (max-width: 1000px) 33vw, 25vw"
             style={{ objectFit: 'cover' }}
@@ -243,7 +243,11 @@ export default function Team({ lang }: { lang: Lang }) {
           <div className="sup__ph">
             <Image
               src={supervisor.photo}
-              alt={pick(lang, supervisor.nameAr, supervisor.nameEn)}
+              alt={`${pick(lang, supervisor.nameAr, supervisor.nameEn)} — ${pick(
+                lang,
+                supervisor.roleAr,
+                supervisor.roleEn,
+              )}${pick(lang, '، ', ', ')}${pick(lang, supervisor.affiliationAr, supervisor.affiliationEn)}`}
               width={264}
               height={352}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}

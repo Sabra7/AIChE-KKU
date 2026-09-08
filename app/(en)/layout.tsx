@@ -6,10 +6,10 @@ import { organizationJsonLd } from '@/lib/jsonld';
 
 import '../globals.css';
 
-const title = `${site.nameEn} — ${site.universityEn}`;
+const title = 'AIChE KKU — Chemical Engineering Student Chapter, King Khalid University, Abha';
 
 const description =
-  'The King Khalid University student chapter of the American Institute of Chemical Engineers, Abha. Workshops, courses and events connecting students to a network across 110+ countries.';
+  'AIChE KKU — the AIChE student chapter at King Khalid University, Abha. Run by students of the Chemical Engineering Department at KKU: technical workshops, engineering courses and industry visits connecting them to a network across 110+ countries.';
 
 /** Root layout for the English tree, served at `/en`. */
 export const metadata: Metadata = {
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     languages: { ar: '/', en: '/en' },
   },
   openGraph: {
-    title: site.nameEn,
+    title,
     description: site.tagline,
     locale: 'en_US',
     type: 'website',

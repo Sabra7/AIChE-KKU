@@ -27,7 +27,13 @@ export default function Join({ lang }: { lang: Lang }) {
         </Reveal>
 
         <Reveal delay={1}>
-          <h2>{pick(lang, 'الطريق يبدأ بنموذج واحد.', 'It starts with one form.')}</h2>
+          <h2>
+            {pick(
+              lang,
+              'الانضمام للفرع الطلابي للهندسة الكيميائية يبدأ بنموذج واحد.',
+              'Join the AIChE student chapter. It starts with one form.',
+            )}
+          </h2>
         </Reveal>
 
         <Reveal as="p" delay={2}>

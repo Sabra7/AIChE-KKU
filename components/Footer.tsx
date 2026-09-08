@@ -14,7 +14,11 @@ export default function Footer({ lang }: { lang: Lang }) {
       <div className="shell ftr__in">
         <p className="ftr__c">
           © <DualDate lang={lang} date={YEAR} inline /> AIChE —{' '}
-          {pick(lang, 'الفرع الطلابي بجامعة الملك خالد', 'King Khalid University Student Chapter')}
+          {pick(
+            lang,
+            'الفرع الطلابي بجامعة الملك خالد — أبها، المملكة العربية السعودية',
+            'King Khalid University Student Chapter — Abha, Saudi Arabia',
+          )}
         </p>
         {/* One clean line, 12px, no technology name-dropping. */}
         <p className="ftr__c en">

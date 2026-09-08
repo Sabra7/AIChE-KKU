@@ -29,7 +29,11 @@ export function organizationJsonLd(lang: Lang) {
     foundingDate: String(site.founded),
     department: { '@type': 'EducationalOrganization', name: pick(lang, site.departmentAr, site.departmentEn) },
     parentOrganization: { '@type': 'CollegeOrUniversity', name: university },
-    address: { '@type': 'PostalAddress', addressLocality: city },
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: city,
+      addressCountry: pick(lang, 'المملكة العربية السعودية', 'Saudi Arabia'),
+    },
     sameAs: Object.values(socials),
   };
 }

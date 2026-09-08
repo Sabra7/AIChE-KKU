@@ -12,7 +12,7 @@ export default function Journey({ lang }: { lang: Lang }) {
     <section className="sect sect--tint" id="journey">
       <div className="shell">
         <Reveal className="sect__head">
-          <h2>{pick(lang, 'مسيرتنا', 'Our journey')}</h2>
+          <h2>{pick(lang, 'مسيرتنا — فرع AIChE أبها', 'Our journey — the AIChE Abha chapter')}</h2>
         </Reveal>
 
         <div className="tl">
