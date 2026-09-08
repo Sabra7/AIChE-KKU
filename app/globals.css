@@ -1217,7 +1217,16 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
 .card__role{ font-size:var(--t-sm); color:var(--ink-2); }
 .card__major{ font-size:var(--t-xs); color:var(--ink-2); opacity:.85; margin-top:.15rem; }
 .card__flag{ font-size:var(--t-xs); color:var(--green-mid); font-weight:600; margin-top:.2rem; }
-.card__code{ font-family:var(--font-en); color:var(--green-mid); font-weight:500; }
+/* Rides in the icon row rather than beside the name. Matched to the 44px
+   icon boxes so it sits on their centre line, and pulled in by roughly the
+   slack the last mark leaves inside its own box -- the glyphs are centred in
+   44px, so without this the mark reads as stranded well clear of them. */
+.card__code{
+  display:inline-flex; align-items:center; height:44px;
+  margin-inline-start:-.45rem; padding-inline:.4rem;
+  font-family:var(--font-en); font-size:var(--t-sm);
+  color:var(--green-mid); font-weight:500;
+}
 
 /* Icons sit under the role, never on the photo. 44px touch targets.
 

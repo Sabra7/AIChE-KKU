@@ -78,10 +78,7 @@ function MemberCard({
         <span className="card__sheen" />
       </div>
 
-      <h3>
-        {name}
-        {member.code && <span className="card__code"> &lt;/&gt;</span>}
-      </h3>
+      <h3>{name}</h3>
       <p className="card__role">{pick(lang, member.roleAr, member.roleEn)}</p>
       {member.majorAr && (
         <p className="card__major">{pick(lang, member.majorAr, member.majorEn)}</p>
@@ -121,7 +118,7 @@ function MemberCard({
       )}
 
       {/* Icons sit below the role, never over the photo, at a 44px target. */}
-      {links.length > 0 && (
+      {(links.length > 0 || member.code) && (
         <div className="card__links">
           {links.map(([key, url]) => {
             // A mailto: has nothing to open in a new tab; Chrome hands back a
@@ -140,6 +137,18 @@ function MemberCard({
               </a>
             );
           })}
+
+          {/*
+            Decorative, and aria-hidden for it: the card already carries
+            "Website designer & developer" as its flag line, so a reader that
+            announced this too would say it twice -- the second time as
+            "less-than slash greater-than".
+          */}
+          {member.code && (
+            <span className="card__code" aria-hidden="true">
+              &lt;/&gt;
+            </span>
+          )}
         </div>
       )}
     </article>
