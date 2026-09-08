@@ -1098,6 +1098,17 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
    and shoved the entire page 84px sideways, clipping the menu button. */
 @media (max-width:1000px){ .team{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
 @media (max-width:700px){ .team{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+/* One card per row on a phone. 480px rather than the 700px band above, so a
+   small tablet keeps two columns instead of being handed a 660px-wide portrait.
+
+   This is also what takes equalise() out of the picture here. The frames are
+   sized to the longest bio, and that bio is 266 characters: two-up it wraps to
+   ~13 lines in a ~130px column, so min-height lands near 436px against an
+   aspect-ratio height of 220 and stretches every frame to twice its natural
+   size. One-up the same text wraps to ~6 lines in a ~316px column, min-height
+   comes out near 260px, and the 3/4 ratio -- 468px -- wins on its own. The
+   inline min-height is still written, it just stops being the larger value. */
+@media (max-width:480px){ .team{ grid-template-columns:minmax(0,1fr); } }
 
 .card{ display:flex; flex-direction:column; }
 
