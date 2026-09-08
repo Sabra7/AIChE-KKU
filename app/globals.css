@@ -181,9 +181,16 @@ a{ color:inherit; }
    the element the transition is short so it tracks, and on release the longer
    transition lets it settle back instead of snapping flat.
    =========================================================================== */
+/* No transform-style:preserve-3d here. The tilt is a self-transform — the
+   element leans, nothing inside it lives in that 3D space — so preserve-3d
+   bought no visual and the tilt only runs behind finePointer() anyway. What
+   it did buy, on every device including the touch ones that never tilt, was a
+   3D rendering context around each card. iOS WebKit stops applying an
+   ancestor's overflow:hidden + border-radius clip to a composited descendant
+   inside one, so .card__ph's photo painted outside its frame and over the
+   neighbouring cards. Flat, the clip holds. */
 [data-tilt]{
   transition:transform .55s var(--ease);
-  transform-style:preserve-3d;
 }
 [data-tilt].tilting{ transition:transform .1s linear; }
 
@@ -1096,17 +1103,25 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
 
 /* Photo + hover reveal.
    blur() is NOT animated frame by frame: it is a single small static value
-   that transitions once, with will-change:filter to keep it on the compositor.
-   The white veil and the bio move on opacity alone -> stays at 60fps. */
+   that transitions once. The white veil and the bio move on opacity alone.
+   That is what holds 60fps -- one short transition of a static value, not a
+   per-frame animation the compositor has to be warned about. */
 .card__ph{
   position:relative; aspect-ratio:3/4; overflow:hidden;
   border-radius:var(--r-lg);
   background:var(--ink); margin-bottom:.9rem;
+  /* Its own stacking context, so nothing painted inside the frame -- the
+     photo, the veil, the frosted toggle -- can ever be ordered above a
+     neighbouring card. Cheap: a stacking context, not a GPU layer. */
+  isolation:isolate;
 }
 .card__ph img{
   width:100%; height:100%; object-fit:cover; display:block;
   filter:blur(0px);
-  will-change:filter;
+  /* will-change:filter was here. It pinned all ~20 photos to their own
+     compositor layers for the whole life of the page, and a promoted layer is
+     precisely what iOS WebKit failed to clip to this frame's rounded overflow.
+     A 0->5px blur transitions fine without the hint. */
   transition:filter .4s var(--ease);
 }
 .card__veil{

@@ -151,8 +151,20 @@ export default function Team({ lang }: { lang: Lang }) {
     if (!bios.length) return;
 
     const frames = Array.from(root.querySelectorAll<HTMLElement>('.card__ph'));
+
+    // The bio is measured top-aligned, not in its painted centred state.
+    // align-items:center splits an overflowing bio evenly above and below the
+    // box, and overflow above the padding edge is unreachable -- it never
+    // enters the scrollable overflow region. Centred, a bio therefore reports
+    // (frame + text) / 2, short by half its own overflow, and the two engines
+    // round that split differently. Top-aligned, all of the overflow falls
+    // block-end and scrollHeight is exactly padding + text in both.
     frames.forEach((f) => (f.style.minHeight = ''));
+    bios.forEach((b) => (b.style.alignItems = 'flex-start'));
+
     const tallest = Math.max(...bios.map((b) => b.scrollHeight));
+
+    bios.forEach((b) => (b.style.alignItems = ''));
     frames.forEach((f) => (f.style.minHeight = `${tallest + 36}px`));
   }, []);
 
@@ -197,7 +209,14 @@ export default function Team({ lang }: { lang: Lang }) {
     });
 
     let timer: ReturnType<typeof setTimeout>;
+    let lastWidth = window.innerWidth;
     const onResize = () => {
+      // Width only. iOS Safari fires resize every time the URL bar collapses
+      // or expands under a scroll, and that is a height change: it cannot
+      // alter how a single bio wraps, but it was rewriting min-height on every
+      // frame on the page mid-scroll.
+      if (window.innerWidth === lastWidth) return;
+      lastWidth = window.innerWidth;
       clearTimeout(timer);
       timer = setTimeout(equalise, 150);
     };
