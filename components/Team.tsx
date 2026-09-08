@@ -55,9 +55,10 @@ function MemberCard({
         The photo blurs on hover and a white veil carries the bio over it.
 
         Note what is NOT happening: blur() is not tweened frame by frame. It is
-        a single small value that transitions once, with will-change:filter
-        keeping it on the compositor. The veil and the bio move on opacity
-        alone. Visually identical to animating the blur, and it holds 60fps.
+        a single small value that transitions once, off `none`. The veil and the
+        bio move on opacity, and are visibility:hidden between times so a closed
+        card carries no painted overlay and reads as collapsed to a screen
+        reader. Visually identical to animating the blur, and it holds 60fps.
       */}
       <div className="card__ph">
         {member.photo ? (

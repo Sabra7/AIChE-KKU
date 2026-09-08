@@ -1117,20 +1117,35 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
 }
 .card__ph img{
   width:100%; height:100%; object-fit:cover; display:block;
-  filter:blur(0px);
-  /* will-change:filter was here. It pinned all ~20 photos to their own
-     compositor layers for the whole life of the page, and a promoted layer is
-     precisely what iOS WebKit failed to clip to this frame's rounded overflow.
-     A 0->5px blur transitions fine without the hint. */
+  /* No filter at rest -- not will-change:filter, and not filter:blur(0px)
+     either. will-change pinned all ~20 photos to their own compositor layers
+     for the life of the page; an identity filter is milder but still a
+     filter, and WebKit renders a filtered element through a surface of its
+     own. Neither is worth carrying while the card is closed.
+     `none` is not a special case for the transition: a filter list
+     interpolates from `none` as if every function sat at its initial value,
+     so none -> blur(5px) animates identically to the old 0px -> 5px. */
   transition:filter .4s var(--ease);
 }
+/* visibility, not opacity alone. An opacity:0 overlay is still a painted
+   box: it keeps its render layer and it is still read out by a screen
+   reader, which for the bio means the whole roster's text is exposed while
+   every card reads as collapsed. visibility:hidden drops it from both, and
+   is delayed by the length of the fade so the fade still plays out.
+   equalise() is unaffected -- a visibility:hidden box is laid out normally
+   and still reports scrollHeight. */
 .card__veil{
   position:absolute; inset:0; background:rgba(251,249,247,.86);
-  opacity:0; transition:opacity .4s var(--ease);
+  opacity:0; visibility:hidden;
+  transition:opacity .4s var(--ease), visibility 0s linear .4s;
 }
 /* Specular highlight, centred on the pointer via --sx/--sy. It sits under the
    veil so it fades out as the bio comes in, rather than washing the text. */
 .card__sheen{
+  /* Nothing under (hover:none) ever raises its opacity, so on a phone this
+     was one full-size gradient layer per card that could not be seen by
+     anyone. display:none takes them out of the render tree there. */
+  display:none;
   position:absolute; inset:0; pointer-events:none;
   background:radial-gradient(
     150px circle at var(--sx, 50%) var(--sy, 50%),
@@ -1139,6 +1154,7 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
   opacity:0; transition:opacity .4s var(--ease);
 }
 @media (hover:hover){
+  .card__sheen{ display:block; }
   .card:hover .card__sheen{ opacity:1; }
 }
 .card__bio{
@@ -1146,7 +1162,8 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
   display:flex; align-items:center;
   padding:1.1rem;
   font-size:var(--t-xs); line-height:1.7; color:var(--ink);
-  opacity:0; transition:opacity .4s var(--ease);
+  opacity:0; visibility:hidden;
+  transition:opacity .4s var(--ease), visibility 0s linear .4s;
   overflow:hidden;
 }
 /* `.open` is the state the toggle button drives, and it works everywhere.
@@ -1156,12 +1173,19 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
    like it did nothing. Only a real pointer gets the hover reveal. */
 .card.open .card__ph img{ filter:blur(5px); }
 .card.open .card__veil,
-.card.open .card__bio{ opacity:1; }
+.card.open .card__bio{
+  opacity:1; visibility:visible;
+  /* No delay on the way in, or the fade would play against a hidden box. */
+  transition:opacity .4s var(--ease), visibility 0s;
+}
 
 @media (hover:hover){
   .card:hover .card__ph img{ filter:blur(5px); }
   .card:hover .card__veil,
-  .card:hover .card__bio{ opacity:1; }
+  .card:hover .card__bio{
+    opacity:1; visibility:visible;
+    transition:opacity .4s var(--ease), visibility 0s;
+  }
 }
 
 .card__initials{
