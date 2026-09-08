@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { pick, type Lang } from '@/lib/i18n';
 import { SocialMark, SOCIAL_LABELS, type SocialKey } from '@/lib/socials';
@@ -52,13 +52,15 @@ function MemberCard({
   return (
     <article className={`card${open ? ' open' : ''}`} data-tilt="5">
       {/*
-        The photo blurs on hover and a white veil carries the bio over it.
-
-        Note what is NOT happening: blur() is not tweened frame by frame. It is
-        a single small value that transitions once, off `none`. The veil and the
-        bio move on opacity, and are visibility:hidden between times so a closed
-        card carries no painted overlay and reads as collapsed to a screen
-        reader. Visually identical to animating the blur, and it holds 60fps.
+        The frame holds a photo and nothing else. The bio used to be laid over
+        it -- a veil, the text, and a toggle, all absolutely positioned inside
+        this box -- which is why equalise() had to stretch every frame to fit
+        the longest bio: on a phone that meant a 165px-wide box forced to 436px
+        against a declared aspect-ratio of 3/4, i.e. a box overriding its own
+        ratio by 2.4x. .gal figure is the same clip pattern with no such
+        override and it never glitched; this one did, on iOS, every time a row
+        scrolled in. So the bio moved out, and the frame went back to being an
+        aspect-ratio box with a single source of truth for its height.
       */}
       <div className="card__ph">
         {member.photo ? (
@@ -74,28 +76,6 @@ function MemberCard({
         )}
         {/* Specular highlight: follows the pointer via --sx/--sy, paint only. */}
         <span className="card__sheen" />
-        <span className="card__veil" />
-        {bio && <p className="card__bio">{bio}</p>}
-
-        {/*
-          Touch devices have no hover, so the bio needs a real control. It sits
-          in the frame's bottom corner rather than under the card: the photo is
-          what it acts on, and below the card it read as a stray chip stranded
-          in the corner. It must live inside .card__ph because that is the
-          positioned ancestor — and the rounded overflow that keeps it tucked
-          into the frame.
-        */}
-        {bio && (
-          <button
-            className="card__toggle"
-            type="button"
-            aria-expanded={open}
-            onClick={() => onToggle(open ? null : member.id)}
-            data-ripple
-          >
-            {pick(lang, ui.readBioAr, ui.readBioEn)}
-          </button>
-        )}
       </div>
 
       <h3>
@@ -108,6 +88,36 @@ function MemberCard({
       )}
       {member.flagAr && (
         <p className="card__flag">{pick(lang, member.flagAr, member.flagEn ?? member.flagAr)}</p>
+      )}
+
+      {/*
+        The bio, in the supervisor card's idiom: a bordered box with an accent
+        edge on the inline-start. It opens on a real tap rather than on hover,
+        which is what the photo overlay was only ever pretending to do on a
+        phone -- a touch browser leaves :hover stuck on whatever was tapped
+        last, so the old reveal had to be fenced off behind (hover:hover) and
+        touch got the button instead. One control now, on every device.
+
+        The height animates with grid-template-rows 0fr -> 1fr, so nothing has
+        to measure anything: no scrollHeight read, no inline height, no resize
+        listener. That is the whole of what equalise() used to do.
+      */}
+      {bio && (
+        <div className="card__bio">
+          <button
+            className="card__bioBtn"
+            type="button"
+            aria-expanded={open}
+            onClick={() => onToggle(open ? null : member.id)}
+            data-ripple
+          >
+            <span>{pick(lang, ui.readBioAr, ui.readBioEn)}</span>
+            <i className="card__bioChev" aria-hidden="true" />
+          </button>
+          <div className="card__bioWrap">
+            <p className="card__bioTxt">{bio}</p>
+          </div>
+        </div>
       )}
 
       {/* Icons sit below the role, never over the photo, at a 44px target. */}
@@ -137,37 +147,8 @@ function MemberCard({
 }
 
 export default function Team({ lang }: { lang: Lang }) {
-  const rootRef = useRef<HTMLElement>(null);
   // One bio at a time, across both groups.
   const [openBio, setOpenBio] = useState<string | null>(null);
-
-  /**
-   * Give every photo frame the same height, sized to the longest bio, so a
-   * short bio reads as deliberate rather than as a card that failed to fill.
-   */
-  const equalise = useCallback(() => {
-    const root = rootRef.current;
-    if (!root) return;
-    const bios = Array.from(root.querySelectorAll<HTMLElement>('.card__bio'));
-    if (!bios.length) return;
-
-    const frames = Array.from(root.querySelectorAll<HTMLElement>('.card__ph'));
-
-    // The bio is measured top-aligned, not in its painted centred state.
-    // align-items:center splits an overflowing bio evenly above and below the
-    // box, and overflow above the padding edge is unreachable -- it never
-    // enters the scrollable overflow region. Centred, a bio therefore reports
-    // (frame + text) / 2, short by half its own overflow, and the two engines
-    // round that split differently. Top-aligned, all of the overflow falls
-    // block-end and scrollHeight is exactly padding + text in both.
-    frames.forEach((f) => (f.style.minHeight = ''));
-    bios.forEach((b) => (b.style.alignItems = 'flex-start'));
-
-    const tallest = Math.max(...bios.map((b) => b.scrollHeight));
-
-    bios.forEach((b) => (b.style.alignItems = ''));
-    frames.forEach((f) => (f.style.minHeight = `${tallest + 36}px`));
-  }, []);
 
   /**
    * Tap anywhere outside the open card to close its bio.
@@ -176,8 +157,8 @@ export default function Team({ lang }: { lang: Lang }) {
    * card's toggle runs: this clears the open id, then that button's onClick
    * sets its own — so the tapped bio opens instead of merely closing the last.
    *
-   * A tap inside the open card is left alone. The bio covers the whole frame,
-   * so "inside" means the visitor is reading it; only its own button closes it.
+   * A tap inside the open card is left alone: the visitor is reading the bio,
+   * and only the card's own button should close it.
    */
   useEffect(() => {
     if (!openBio) return;
@@ -198,39 +179,8 @@ export default function Team({ lang }: { lang: Lang }) {
     };
   }, [openBio]);
 
-  useEffect(() => {
-    let alive = true;
-    equalise();
-
-    // The first pass runs against the fallback face, because next/font swaps
-    // the real one in asynchronously. Arabic and Latin metrics differ enough
-    // that a bio measured before the swap under-sizes every frame on the page.
-    document.fonts?.ready.then(() => {
-      if (alive) equalise();
-    });
-
-    let timer: ReturnType<typeof setTimeout>;
-    let lastWidth = window.innerWidth;
-    const onResize = () => {
-      // Width only. iOS Safari fires resize every time the URL bar collapses
-      // or expands under a scroll, and that is a height change: it cannot
-      // alter how a single bio wraps, but it was rewriting min-height on every
-      // frame on the page mid-scroll.
-      if (window.innerWidth === lastWidth) return;
-      lastWidth = window.innerWidth;
-      clearTimeout(timer);
-      timer = setTimeout(equalise, 150);
-    };
-    window.addEventListener('resize', onResize);
-    return () => {
-      alive = false;
-      clearTimeout(timer);
-      window.removeEventListener('resize', onResize);
-    };
-  }, [equalise, lang]);
-
   return (
-    <section className="sect sect--tint" id="team" ref={rootRef}>
+    <section className="sect sect--tint" id="team">
       <div className="shell">
         <Reveal className="sect__head">
           <h2>{pick(lang, 'الفريق', 'The team')}</h2>

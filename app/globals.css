@@ -208,7 +208,7 @@ a{ color:inherit; }
      The order matters and is not stylistic: autoprefixer's cleanup pass
      deletes a -webkit- line that PRECEDES the standard property, treating it
      as its own stale output. Written after, it survives. Keep this pair in
-     this order, and .card__toggle's for the same reason. */
+     this order. */
   backdrop-filter:blur(14px);
   -webkit-backdrop-filter:blur(14px);
   border-bottom:1px solid transparent;
@@ -1098,60 +1098,26 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
    and shoved the entire page 84px sideways, clipping the menu button. */
 @media (max-width:1000px){ .team{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
 @media (max-width:700px){ .team{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
-/* One card per row on a phone. 480px rather than the 700px band above, so a
-   small tablet keeps two columns instead of being handed a 660px-wide portrait.
-
-   This is also what takes equalise() out of the picture here. The frames are
-   sized to the longest bio, and that bio is 266 characters: two-up it wraps to
-   ~13 lines in a ~130px column, so min-height lands near 436px against an
-   aspect-ratio height of 220 and stretches every frame to twice its natural
-   size. One-up the same text wraps to ~6 lines in a ~316px column, min-height
-   comes out near 260px, and the 3/4 ratio -- 468px -- wins on its own. The
-   inline min-height is still written, it just stops being the larger value. */
-@media (max-width:480px){ .team{ grid-template-columns:minmax(0,1fr); } }
 
 .card{ display:flex; flex-direction:column; }
 
-/* Photo + hover reveal.
-   blur() is NOT animated frame by frame: it is a single small static value
-   that transitions once. The white veil and the bio move on opacity alone.
-   That is what holds 60fps -- one short transition of a static value, not a
-   per-frame animation the compositor has to be warned about. */
+/* The photo, and only the photo.
+
+   Deliberately the same shape as .gal figure, down to the properties that are
+   NOT here: no isolation, no inline height, nothing absolutely positioned over
+   it but the initials fallback. The gallery runs the identical clip -- rounded
+   overflow over a lazily loaded next/image fill -- on the same phone grid and
+   has never glitched, while this frame did, on iOS, every time a row scrolled
+   in. The difference was that equalise() forced a min-height on this one and
+   overrode the ratio by 2.4x. There is nothing left to override it now. */
 .card__ph{
   position:relative; aspect-ratio:3/4; overflow:hidden;
   border-radius:var(--r-lg);
   background:var(--ink); margin-bottom:.9rem;
-  /* Its own stacking context, so nothing painted inside the frame -- the
-     photo, the veil, the frosted toggle -- can ever be ordered above a
-     neighbouring card. Cheap: a stacking context, not a GPU layer. */
-  isolation:isolate;
 }
-.card__ph img{
-  width:100%; height:100%; object-fit:cover; display:block;
-  /* No filter at rest -- not will-change:filter, and not filter:blur(0px)
-     either. will-change pinned all ~20 photos to their own compositor layers
-     for the life of the page; an identity filter is milder but still a
-     filter, and WebKit renders a filtered element through a surface of its
-     own. Neither is worth carrying while the card is closed.
-     `none` is not a special case for the transition: a filter list
-     interpolates from `none` as if every function sat at its initial value,
-     so none -> blur(5px) animates identically to the old 0px -> 5px. */
-  transition:filter .4s var(--ease);
-}
-/* visibility, not opacity alone. An opacity:0 overlay is still a painted
-   box: it keeps its render layer and it is still read out by a screen
-   reader, which for the bio means the whole roster's text is exposed while
-   every card reads as collapsed. visibility:hidden drops it from both, and
-   is delayed by the length of the fade so the fade still plays out.
-   equalise() is unaffected -- a visibility:hidden box is laid out normally
-   and still reports scrollHeight. */
-.card__veil{
-  position:absolute; inset:0; background:rgba(251,249,247,.86);
-  opacity:0; visibility:hidden;
-  transition:opacity .4s var(--ease), visibility 0s linear .4s;
-}
-/* Specular highlight, centred on the pointer via --sx/--sy. It sits under the
-   veil so it fades out as the bio comes in, rather than washing the text. */
+.card__ph img{ width:100%; height:100%; object-fit:cover; display:block; }
+/* Specular highlight, centred on the pointer via --sx/--sy. Paint only, and
+   pointer-only -- there is no hover on a phone to light it. */
 .card__sheen{
   /* Nothing under (hover:none) ever raises its opacity, so on a phone this
      was one full-size gradient layer per card that could not be seen by
@@ -1168,35 +1134,71 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
   .card__sheen{ display:block; }
   .card:hover .card__sheen{ opacity:1; }
 }
+/* THE BIO  —  the supervisor card's idiom, shrunk to fit a member card: a
+   bordered box with an accent edge on the inline-start. It sits under the
+   card's text, outside the photo, and it is the whole reason the frame above
+   is a plain aspect-ratio box again.
+
+   It also replaces a hover reveal with a real control. The old overlay lit up
+   on :hover, which a touch browser leaves stuck on whatever was tapped last --
+   so the reveal had to be fenced behind (hover:hover) and touch was handed a
+   separate button. One control now, the same on every device. */
 .card__bio{
-  position:absolute; inset:0;
-  display:flex; align-items:center;
-  padding:1.1rem;
-  font-size:var(--t-xs); line-height:1.7; color:var(--ink);
-  opacity:0; visibility:hidden;
-  transition:opacity .4s var(--ease), visibility 0s linear .4s;
+  margin-top:.7rem;
+  border:1px solid var(--rule);
+  border-inline-start:3px solid var(--accent);
+  border-radius:var(--r-sm);
+  background:var(--surface);
   overflow:hidden;
+  transition:border-color .25s var(--ease), background-color .25s var(--ease);
 }
-/* `.open` is the state the toggle button drives, and it works everywhere.
-   `:hover` is fenced off behind (hover:hover) on purpose: a touch browser
-   leaves :hover stuck on whatever was last tapped, so on a phone the bio stayed
-   visible after the button had already set open=false — the second tap looked
-   like it did nothing. Only a real pointer gets the hover reveal. */
-.card.open .card__ph img{ filter:blur(5px); }
-.card.open .card__veil,
-.card.open .card__bio{
-  opacity:1; visibility:visible;
-  /* No delay on the way in, or the fade would play against a hidden box. */
-  transition:opacity .4s var(--ease), visibility 0s;
+.card.open .card__bio{ border-color:var(--rule-strong); background:var(--bg); }
+
+.card__bioBtn{
+  /* isolation + overflow are for .btn__rip, which is painted at z-index:-1 and
+     needs both a stacking context to sit inside and a box to be clipped to. */
+  position:relative; isolation:isolate; overflow:hidden;
+  display:flex; align-items:center; gap:.45rem;
+  width:100%; min-height:44px; padding:.45rem .7rem;
+  border:0; background:none; font:inherit; text-align:start;
+  font-size:var(--t-xs); font-weight:600; color:var(--green-deep);
+  cursor:pointer;
+}
+.card__bioBtn > span{ margin-inline-end:auto; }
+/* The box clips to its own radius, so the global focus ring -- which is drawn
+   3px OUTSIDE the button -- would be cut off on every edge. Inset it instead. */
+.card__bioBtn:focus-visible{ outline-offset:-3px; }
+/* .btn__rip's default is a pale cream, for the dark .btn it was written for.
+   On this surface it is invisible; the ghost button has the same problem and
+   solves it the same way. */
+.card__bioBtn .btn__rip{
+  background:radial-gradient(circle, rgba(35,122,19,.16) 0%, rgba(35,122,19,0) 70%);
 }
 
-@media (hover:hover){
-  .card:hover .card__ph img{ filter:blur(5px); }
-  .card:hover .card__veil,
-  .card:hover .card__bio{
-    opacity:1; visibility:visible;
-    transition:opacity .4s var(--ease), visibility 0s;
-  }
+/* A chevron drawn from two borders, so it costs no sprite and no markup. */
+.card__bioChev{
+  flex:none; width:7px; height:7px; margin-block-start:-3px;
+  border-inline-end:1.5px solid currentColor;
+  border-block-end:1.5px solid currentColor;
+  transform:rotate(45deg);
+  transition:transform .35s var(--ease);
+}
+.card.open .card__bioChev{ transform:rotate(-135deg); margin-block-start:2px; }
+
+/* 0fr -> 1fr is what makes this animate without anyone measuring anything.
+   The row resolves to the text's own height, so there is no scrollHeight read,
+   no inline height, and no resize listener -- which is the whole of what
+   equalise() used to exist for. The grid item needs min-height:0, or its
+   automatic minimum size would refuse to shrink below the text. */
+.card__bioWrap{
+  display:grid; grid-template-rows:0fr;
+  transition:grid-template-rows .35s var(--ease);
+}
+.card.open .card__bioWrap{ grid-template-rows:1fr; }
+.card__bioTxt{
+  min-height:0; overflow:hidden;
+  padding-inline:.7rem; padding-block-end:.7rem;
+  font-size:var(--t-xs); line-height:1.7; color:var(--ink-2);
 }
 
 .card__initials{
@@ -1231,41 +1233,6 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
 }
 .card__links a:first-child{ margin-inline-start:-.7rem; }
 .card__links a:hover{ color:var(--green-deep); }
-
-/* Touch devices have no hover, so the bio needs a real, tappable control.
-   It is a chip rather than an underlined word: 44px is easier to hit and the
-   ripple gives the tap the feedback a hover state would otherwise carry.
-
-   It rides in the frame's bottom corner, over the photo it acts on. Logical
-   insets, so it tucks into the start corner in both trees. z-index clears the
-   veil and the bio, which are painted by the same stacking context — without
-   it the open state would drop the control behind its own overlay. */
-.card__toggle{
-  display:none; position:absolute; z-index:3;
-  inset-block-end:.75rem; inset-inline-start:.75rem;
-  overflow:hidden; isolation:isolate;
-  border:1px solid rgba(13,62,107,.18);
-  border-radius:999px; padding:.4rem 1rem;
-  font:inherit; font-size:var(--t-xs); color:var(--ink);
-  cursor:pointer; min-height:44px;
-  /* Frosted rather than solid: it has to stay legible over a dark suit and a
-     pale studio backdrop alike, without hiding the face behind it. */
-  background:rgba(251,249,247,.82);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  box-shadow:0 4px 14px -6px rgba(6,28,49,.45);
-  transition:border-color .25s var(--ease), color .25s var(--ease),
-             background-color .25s var(--ease);
-}
-.card__toggle[aria-expanded="true"]{
-  border-color:var(--accent); color:var(--green-deep);
-  background:rgba(251,249,247,.94);
-}
-@media (hover:none){
-  .card__toggle{ display:inline-flex; align-items:center; }
-  /* Clear the chip's 44px + inset, so the open bio never runs underneath it. */
-  .card__bio{ padding-block-end:4rem; }
-}
 
 /* ===========================================================================
    PARTNERS  —  logos only, no links, no motion
