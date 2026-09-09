@@ -36,7 +36,22 @@
      REDUCED MOTION ....... the opt-out block; keep it last
    --------------------------------------------------------------------------- */
 
-@layer base {
+/* NOT wrapped in `@layer base`, and that is deliberate.
+
+   Inside it, Tailwind registered every class below as one of its own, and its
+   JIT scanner reads .tsx files as raw text -- so `if (!open)` and `(!flat ||
+   rail)` in the components were read as `!`-important candidates and it emitted
+   a duplicate of the matching rule with !important on every declaration. 47 of
+   them. Two came out with no selector at all, because prefixing `!` to the last
+   class of `.nav a` or `.burger` leaves nothing to prefix, and an empty selector
+   is invalid CSS. Next 15's pipeline swallowed them; Turbopack rejects them and
+   fails the build.
+
+   Nothing is lost by leaving the layer off: `@tailwind components` and
+   `@tailwind utilities` emit nothing here, so unlayered rules and base-layer
+   rules land in the same place relative to Preflight, which is the only thing
+   `@tailwind base` contributes. Verified by diffing the compiled CSS either
+   way: identical but for the 47 junk rules. */
 
 /* ===========================================================================
    DESIGN TOKENS  —  mirrored in tailwind.config.ts
@@ -1353,6 +1368,4 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
   .joint circle{ scale:1 !important; }
   .swap > span:nth-child(2){ display:none; }
   .btn__rip{ display:none; }
-}
-
 }

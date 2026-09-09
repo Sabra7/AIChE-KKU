@@ -58,7 +58,7 @@ one array — no CMS, no database, no admin panel, no deploy pipeline to learn.
 
 | Layer | Choice | Notes |
 | --- | --- | --- |
-| Framework | **Next.js 15.5** (App Router) | Static generation; no server runtime needed |
+| Framework | **Next.js 16.3** (App Router, Turbopack) | Static generation; no server runtime needed |
 | UI | **React 19** | Server Components by default; `'use client'` only where motion needs it |
 | Language | **TypeScript 5.5**, `strict: true` | Content in `data/` is typed, so a malformed entry fails the build |
 | Styling | **Handwritten CSS** in `app/globals.css` | Tailwind is installed for its Preflight reset only — see below |
@@ -254,8 +254,8 @@ aiche-kku/
 
 ## Installation
 
-Requires **Node.js 18.18+, 19.8+ or 20+** (see `engines` in `package.json`);
-Node 20 or newer is recommended.
+Requires **Node.js 20.9 or newer** (see `engines` in `package.json`) — that is
+Next 16's own floor, not a preference.
 
 ```bash
 git clone https://github.com/Sabra7/AIChE-KKU.git

@@ -13,8 +13,12 @@ import type { Config } from 'tailwindcss';
  * package without writing a replacement reset first and the layout shifts in
  * places that are easy to miss.
  *
- * `@tailwind components` and `@tailwind utilities` currently emit nothing, and
- * the whole of globals.css sits inside `@layer base`, so the cascade is flat.
+ * `@tailwind components` and `@tailwind utilities` currently emit nothing, so
+ * the cascade is flat: globals.css is unlayered and lands after Preflight
+ * either way. It used to sit inside `@layer base`, which made Tailwind treat
+ * every class in it as one of its own and emit `!important` duplicates keyed
+ * off `!name` strings its scanner found in the components' JavaScript. See the
+ * note at the top of app/globals.css before putting that wrapper back.
  *
  * The theme below therefore does no work at build time. It is kept as the
  * written record of the design system: the same tokens globals.css declares as

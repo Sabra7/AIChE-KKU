@@ -192,6 +192,11 @@ Several packages are behind their latest release (`gsap`, `tailwindcss` 3 → 4,
 `typescript`, the `@types/*` set). None carry an advisory today. Run
 `npm audit` before each deploy.
 
+Tailwind is held at 3 deliberately for now: v4 drops the JavaScript config and
+the PostCSS plugin this project builds through, so it is a migration rather
+than a version bump. See the note at the top of `tailwind.config.ts` for what
+Tailwind is actually doing here, which is less than it looks.
+
 Do not add a dependency to this project without a concrete reason. The current
 list is short enough to audit by reading it.
 

@@ -106,20 +106,44 @@ export default function Gains({ lang }: { lang: Lang }) {
   /** The rail is the phone presentation: narrow AND unpinned. */
   const rail = flat && narrow;
 
-  // Decide whether this visitor gets the pin at all, and load GSAP if so.
+  /**
+   * Decide whether this visitor gets the pin at all, and load GSAP if so.
+   *
+   * Keyed to RAIL_MQ rather than a one-off `innerWidth` read, and re-run when
+   * that query flips. Read once at mount, the two halves of the breakpoint
+   * drifted apart the moment a desktop window was dragged across it: `narrow`
+   * tracked the query live while `flat` never moved again, so narrowing left
+   * `flat === false` and the pinned stage running at phone width, and widening
+   * from a narrow start left the flat list on a desktop with GSAP never loaded.
+   *
+   * Going back to flat is safe to do at any time: `.gains--flat .gains__track`
+   * forces `height:auto !important`, which outranks the inline height the
+   * measuring effect wrote, and that effect reverts its own ScrollTrigger on
+   * cleanup.
+   */
   useEffect(() => {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced || window.innerWidth < 768) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
+    const mq = window.matchMedia(RAIL_MQ);
     let cancelled = false;
 
-    (async () => {
+    const decide = async () => {
+      // Narrow: the rail owns this width, so drop the pin and keep GSAP
+      // unloaded. Whatever was already loaded stays in the ref for the way back.
+      if (mq.matches) {
+        setFlat(true);
+        return;
+      }
+      if (gsapRef.current) {
+        setFlat(false);
+        return;
+      }
       try {
         const [{ gsap }, { ScrollTrigger }] = await Promise.all([
           import('gsap'),
           import('gsap/ScrollTrigger'),
         ]);
-        if (cancelled) return;
+        if (cancelled || mq.matches) return;
 
         gsap.registerPlugin(ScrollTrigger);
         gsapRef.current = { gsap, ScrollTrigger };
@@ -128,10 +152,13 @@ export default function Gains({ lang }: { lang: Lang }) {
         // GSAP ships in the bundle, so this only fires if its chunk fails to
         // arrive (a dropped connection mid-load). The flat list stays.
       }
-    })();
+    };
 
+    decide();
+    mq.addEventListener('change', decide);
     return () => {
       cancelled = true;
+      mq.removeEventListener('change', decide);
     };
   }, []);
 
