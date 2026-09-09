@@ -176,17 +176,17 @@ comment widget all change the calculation.
 Four runtime dependencies (`next`, `react`, `react-dom`, `gsap`) and seven
 build-time ones. Small surface, deliberately.
 
-`npm audit` as of the last review reports **2 advisories, both `postcss`, both
-build-time only**:
+`npm audit` reports **no advisories**. What holds that is the `overrides` block
+in `package.json`, which pins `postcss` to `8.5.28` across the whole tree:
+`npm ls postcss` resolves Next, autoprefixer and Tailwind alike to that single
+copy. **The pin is load-bearing — do not drop it while updating dependencies,**
+and re-run `npm audit` after any change to the lockfile.
 
-- The direct `postcss` devDependency has been upgraded to `8.5.28`, which
-  clears it.
-- A second copy is vendored inside `next@15.5.25` and cannot be moved without
-  upgrading to Next 16, a major version bump. **Accepted risk:** every one of
-  those advisories requires attacker-controlled CSS to be fed through PostCSS.
-  The only CSS this project processes is `app/globals.css`, from this
-  repository. There is no path by which a visitor supplies CSS, and PostCSS
-  never runs at request time. Re-evaluate when Next 16 is adopted.
+One gap no audit tool covers: Next ships pre-compiled PostCSS plugins under
+`next/dist/compiled/`, bundled rather than installed, so nothing inspects their
+versions. They run at build time only, over `app/globals.css` from this
+repository. A visitor never supplies CSS and PostCSS never runs at request time,
+so any exposure there is bounded by the build machine, not the deployed site.
 
 Several packages are behind their latest release (`gsap`, `tailwindcss` 3 → 4,
 `typescript`, the `@types/*` set). None carry an advisory today. Run

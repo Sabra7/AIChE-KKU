@@ -385,9 +385,10 @@ Full detail in **[SECURITY.md](SECURITY.md)**. In brief:
   it are in `SECURITY.md`.
 - **Fonts are self-hosted** by `next/font` at build time, so no visitor request
   reaches Google at runtime.
-- **`npm audit`** reports two build-time PostCSS advisories reachable only
-  through the copy vendored inside Next 15. Neither is reachable at request
-  time. Details and the accepted-risk reasoning are in `SECURITY.md`.
+- **`npm audit` reports no advisories.** The `overrides` pin on
+  `postcss@8.5.28` in `package.json` is what holds that: it collapses every
+  consumer — Next, autoprefixer, Tailwind — onto one patched copy. The pin is
+  load-bearing; do not drop it while updating dependencies.
 
 ---
 
@@ -419,6 +420,10 @@ Full detail in **[SECURITY.md](SECURITY.md)**. In brief:
 No photo yet? Set `photo: null` and the card shows the member's initials on the
 deep blue ground. That is a designed state, not a broken image, so it is fine
 to ship.
+
+`bioAr` / `bioEn` are optional, and a member without them simply gets no bio
+panel — the card is complete either way. Supply both languages or neither: a
+member with only `bioAr` shows the panel on `/` and not on `/en`.
 
 Order in the array is the order on the page. Both groups render four across on
 desktop, three at ≤1000px and two at ≤700px.
@@ -499,7 +504,7 @@ that restate the code.
 - Bilingual fields are always suffixed `Ar` / `En` (`titleAr`, `titleEn`) so a
   missing translation is visible at a glance.
 - CSS classes are BEM-ish and short: block `.card`, element `.card__ph`,
-  modifier `.card--soon`. Data attributes drive behaviour, not styling hooks:
+  modifier `.card__ph--soon`. Data attributes drive behaviour, not styling hooks:
   `[data-tilt]`, `[data-ripple]`, `[data-magnet]`, `[data-depth]`.
 
 ### Where new work goes

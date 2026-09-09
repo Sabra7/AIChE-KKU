@@ -27,6 +27,21 @@ export default function Header({ lang }: { lang: Lang }) {
   }, []);
 
   /**
+   * Escape closes the mobile menu. The panel is a disclosure the burger owns,
+   * and dismissing one with Escape is what a keyboard visitor expects; without
+   * it the only way out is to tab back to the burger. Team.tsx closes an open
+   * bio the same way.
+   */
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open]);
+
+  /**
    * Mark the section currently in view, for aria-current and the underline.
    *
    * The root margin leaves a band roughly 5% of the viewport tall across the
