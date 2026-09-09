@@ -173,8 +173,9 @@ comment widget all change the calculation.
 
 ## Dependencies
 
-Four runtime dependencies (`next`, `react`, `react-dom`, `gsap`) and seven
-build-time ones. Small surface, deliberately.
+Three runtime dependencies (`next`, `react`, `react-dom`) and seven build-time
+ones. Small surface, deliberately — `gsap` was the fourth until the GAINS pin
+it drove was replaced by a CSS scroller.
 
 `npm audit` reports **no advisories**. What holds that is the `overrides` block
 in `package.json`, which pins `postcss` to `8.5.28` across the whole tree:
@@ -188,7 +189,7 @@ versions. They run at build time only, over `app/globals.css` from this
 repository. A visitor never supplies CSS and PostCSS never runs at request time,
 so any exposure there is bounded by the build machine, not the deployed site.
 
-Several packages are behind their latest release (`gsap`, `tailwindcss` 3 → 4,
+Several packages are behind their latest release (`tailwindcss` 3 → 4,
 `typescript`, the `@types/*` set). None carry an advisory today. Run
 `npm audit` before each deploy.
 

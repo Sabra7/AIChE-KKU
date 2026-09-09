@@ -6,7 +6,7 @@
    Design tokens and component styles.
 
    Tailwind handles layout utilities in the components; the classes below own
-   the pieces that are genuinely bespoke — the pinned GAINS section, the team
+   the pieces that are genuinely bespoke — the GAINS card rail, the team
    card reveal, the molecular hero field. Writing those as utility strings
    would have made them unreadable, so they live here as named classes and
    tailwind.config.ts mirrors the tokens for utility use.
@@ -25,7 +25,7 @@
      SECTION FURNITURE .... .sect, .sect__head, .joint
      ABOUT ................ .story, .beats, .beat
      TARGETS .............. .figs, .fig, .cnt
-     GAINS ................ .gains, .gainlist, .gain  (pinned, or a phone rail)
+     GAINS ................ .gains, .gainlist, .gain  (horizontal card rail)
      PROGRAMME ............ .wshops, .wshop
      TIMELINE ............. .tl
      GALLERY .............. .gal
@@ -87,8 +87,8 @@
   --r-md: 14px;
   --r-lg: 20px;
 
-  /* The fixed header's height. The pinned Gains stage has to subtract it,
-     so it cannot stay a magic number inside .hdr__in. */
+  /* The fixed header's height. scroll-padding-top on <html> offsets every
+     in-page jump by it, so it cannot stay a magic number inside .hdr__in. */
   --hdr-h: 66px;
 
   --shell: 1180px;
@@ -215,19 +215,26 @@ a{ color:inherit; }
 .hdr{
   position:fixed; inset-inline:0; top:0; z-index:100;
   background:rgba(245,241,238,.82);
-  /* Prefix written by hand: Safari only took the unprefixed property in 18.0,
-     and autoprefixer's targets start at iOS 18, so it adds nothing. Without
-     this an iPhone on iOS 17 or older gets a flat translucent bar with the
-     page scrolling through it, unblurred.
-
-     The order matters and is not stylistic: autoprefixer's cleanup pass
-     deletes a -webkit- line that PRECEDES the standard property, treating it
-     as its own stale output. Written after, it survives. Keep this pair in
-     this order. */
+  /* The prefixed twin is NOT beside this one -- see the @supports block below
+     the rule. Keeping both here silently loses one of them. */
   backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);
   border-bottom:1px solid transparent;
   transition:border-color .3s var(--ease);
+}
+/* Safari only took the unprefixed property in 18.0, and browserslist's
+   "last 3 versions" no longer reaches anything older, so no tool adds this for
+   us. Without it an iPhone on iOS 17 gets a flat translucent bar with the page
+   scrolling through it, unblurred.
+
+   It has to live in its own block. Written as a second declaration inside .hdr
+   it disappeared: Lightning CSS -- Turbopack's minifier, which Next 16 made the
+   default -- reads a prefixed/unprefixed pair as one property declared twice and
+   keeps only whichever comes last. Standard-then-prefixed shipped the prefix
+   alone and cost Firefox the blur; prefixed-then-standard shipped the standard
+   alone and cost iOS 17 the blur. Across an at-rule boundary neither can eat
+   the other. */
+@supports (-webkit-backdrop-filter: blur(1px)){
+  .hdr{ -webkit-backdrop-filter:blur(14px); }
 }
 .hdr.stuck{ border-bottom-color:var(--rule); }
 .hdr__in{
@@ -764,81 +771,116 @@ html[lang="ar"] .hero h1{ line-height:1.45; }
 }
 
 /* ===========================================================================
-   GAINS  —  the pinned scroll section (most important section in the site)
+   GAINS  —  six cards on one horizontal scroller (most important section)
+
+   This was two presentations: a stage pinned with position:sticky on desktop,
+   whose progress GSAP's ScrollTrigger read, and this rail on phones. The rail
+   does the same job at every width, so the pin, the measured track height, the
+   shared breakpoint and GSAP itself are all gone. See components/Gains.tsx.
+
+   Nothing here has to be DISCOVERED: the next card is cut by the container
+   edge, the rule fills as you go, the counter says how many are left, and on
+   touch a line of copy names the gesture.
    =========================================================================== */
-.gains{ background:var(--ink); color:var(--bg); }
-/* Tighter than the global section head: the stage is one viewport tall and the
-   head shares it with six rows, so the standard gap would push them off. */
-.gains .sect__head{ margin-bottom:clamp(1rem,2.6svh,2.2rem); }
-/* Smaller than a normal section head: this one shares the pinned stage with
-   six rows, so it cannot take the full --t-2xl without crowding them. */
-.gains .sect__head h2{ color:var(--bg); font-size:clamp(1.4rem,3.4vw,2.2rem); }
+.gains{ background:var(--ink); color:var(--bg); padding-block:clamp(3.5rem,7vw,5.5rem); }
+/* Positioned and clipping, because the chemistry field behind the cards is
+   absolutely positioned and has to resolve against this box rather than
+   escaping the section. */
+.gains__body{ position:relative; overflow:hidden; }
+.gains__stage{ position:relative; z-index:1; width:100%; }
+
+.gains .sect__head{ margin-bottom:clamp(1.4rem,3vw,2.4rem); }
+.gains .sect__head h2{ color:var(--bg); font-size:clamp(1.6rem,4vw,2.4rem); }
 .gains .sect__head p{ color:rgba(245,241,238,.72); }
 
-/* Track height drives how long the pin lasts. sticky does the pinning;
-   ScrollTrigger only measures progress, so a resize can't desync the layout. */
-.gains__track{ position:relative; }
-.gains__pin{
-  position:sticky; top:0;
-  height:100vh;   /* fallback for iOS < 15.4 — see the note on .hero */
-  height:100svh;
-  display:flex; align-items:flex-start;
-  overflow:hidden;
-  /* The header is fixed and translucent, so content centred in a full-viewport
-     box sits underneath it and reads through the blur. Centre in what the
-     header leaves instead. */
-  padding-top:var(--hdr-h);
+/* --- the scroller --------------------------------------------------------- */
+.gainlist{
+  list-style:none; margin:0; padding:0;
+  display:flex; gap:.85rem;
+  overflow-x:auto; overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;
+  scroll-padding-inline:var(--gutter);
+  /* Full-bleed: cancel .shell's gutter, then re-apply it as padding. The cards
+     still rest on the heading's margin, but they are cut by the container edge
+     instead of stopping short of it — and that cut is the affordance. */
+  margin-inline:calc(var(--gutter) * -1);
+  padding-inline:var(--gutter);
+  padding-block:.2rem 1rem;
+  /* The rule below reports position better than a hairline scrollbar that most
+     phones never paint in the first place. */
+  scrollbar-width:none;
 }
-/* Safe centring: auto margins centre the stage while it fits, then collapse to
-   zero once it does not, so a short window pushes the overflow off the BOTTOM.
-   `align-items:center` would split the overflow evenly and hide the heading
-   behind the header — which is exactly the bug this replaced. */
-.gains__stage{ position:relative; z-index:1; width:100%; margin-block:auto; }
+.gainlist::-webkit-scrollbar{ display:none; }
 
-.gainlist{ list-style:none; margin:0; padding:0; }
 .gain{
-  display:flex; align-items:baseline; gap:clamp(1rem,3vw,2.5rem);
-  padding-block:clamp(.2rem,.85svh,.7rem);
-  opacity:.24;
-  transition:opacity .45s var(--ease);
+  position:relative;
+  /* min-width:0 matters: without it a card whose word is wider than its basis
+     is floored at min-content, and one long word (COMMUNICATE) would make a
+     single card wider than all the others. */
+  flex:0 0 74%; min-width:0; max-width:300px;
+  scroll-snap-align:start;
+  display:flex; flex-direction:column; align-items:flex-start; gap:.45rem;
+  padding:1.15rem 1.05rem 1.35rem;
+  border:1px solid rgba(245,241,238,.16); border-radius:var(--r-md);
+  background:rgba(245,241,238,.045);
+  transition:border-color .35s var(--ease), background-color .35s var(--ease);
 }
-.gain.on{ opacity:1; }
-.gain__i{
-  font-size:clamp(1.15rem,2.4vw,1.7rem);
-  align-self:center;
-  color:rgba(245,241,238,.4);
-  transition:color .45s var(--ease), transform .45s var(--ease);
+/* Wider once there is room for it, so a laptop shows three and a half cards
+   rather than four and a sliver — the half is what says the row carries on. */
+@media (min-width:768px){
+  .gain{ flex-basis:340px; max-width:360px; }
 }
+.gain.on{ border-color:rgba(139,203,50,.45); background:rgba(139,203,50,.07); }
+
+.gain__n{
+  position:absolute;
+  inset-block-start:.9rem; inset-inline-end:1rem;
+  font-family:var(--font-en); font-weight:600;
+  font-size:.7rem; letter-spacing:.14em; line-height:1;
+  color:rgba(245,241,238,.38);
+  transition:color .35s var(--ease);
+}
+.gain.on .gain__n{ color:var(--accent); }
+
+.gain__i{ font-size:1.5rem; color:var(--accent); transition:transform .45s var(--ease); }
+.gain.on .gain__i{ transform:scale(1.12); }
+/* Sized to clear the longest word — COMMUNICATE — inside the narrowest card a
+   320px phone can produce, with room left over. */
 .gain__w{
   font-family:var(--font-en); font-weight:700;
-  /* Capped against viewport height as well as width: the stage is one screen
-     tall, and six rows sized only by width overflow a short laptop window —
-     which pushed the heading up under the header. On narrow screens vw is
-     still the smaller term, so phones are unaffected. */
-  font-size:clamp(1.9rem,min(6.2vw,7.4svh),4.2rem);
+  font-size:clamp(1.4rem,6.4vw,2.1rem);
   letter-spacing:-.035em; line-height:1.05;
-  flex:none;
-  transition:color .45s var(--ease);
+  max-width:100%; color:var(--accent);
 }
-.gain.on .gain__w{ color:var(--accent); }
-.gain.on .gain__i{ color:var(--accent); transform:scale(1.12); }
-.gains--flat .gain__i{ color:var(--accent); }
-.gain__d{
-  font-size:var(--t-sm);
-  color:rgba(245,241,238,.7);
-  max-width:34ch;
-  opacity:0; transform:translate3d(0,6px,0);
-  transition:opacity .45s var(--ease), transform .45s var(--ease);
-}
-.gain.on .gain__d{ opacity:1; transform:none; }
+.gain__d{ font-size:var(--t-sm); color:rgba(245,241,238,.7); }
 
-/* The rule and the counter share a row: the rule is the whole story on a
-   laptop, and on a phone the counter beside it is what turns "you have moved"
-   into "you have four left". */
-.gains__foot{
-  display:flex; align-items:center; gap:.9rem;
-  margin-top:clamp(1.1rem,2.6svh,2.5rem);
+/* --- the swipe prompt: touch only ----------------------------------------- */
+@keyframes swipe-nudge{
+  0%,100%{ transform:translateX(0); }
+  45%{ transform:translateX(calc(var(--dir) * 7px)); }
 }
+/* "Swipe" means nothing to a mouse, and a pointer visitor has the cut card and
+   the counter to go on. */
+.gains__swipe{ display:none; }
+@media (hover:none){
+  .gains__swipe{
+    display:flex; align-items:center; gap:.5rem;
+    font-size:var(--t-xs); line-height:1.5;
+    color:rgba(245,241,238,.72);
+    margin-bottom:.85rem;
+    transition:opacity .5s var(--ease);
+  }
+  /* Fades rather than unmounts: pulling it out of the flow would shift the rail
+     up under the finger that just swiped it. */
+  .gains__swipe.is-done{ opacity:0; }
+}
+.gains__swipe-arrow{
+  display:inline-flex; flex:none; color:var(--accent);
+  animation:swipe-nudge 1.7s var(--ease) infinite;
+}
+
+/* --- progress ------------------------------------------------------------- */
+.gains__foot{ display:flex; align-items:center; gap:.9rem; margin-top:clamp(1.1rem,2.5vw,2rem); }
 .gains__rule{
   flex:1; height:3px; border-radius:999px; background:rgba(245,241,238,.16);
   position:relative; overflow:hidden;
@@ -852,137 +894,16 @@ html[lang="ar"] .hero h1{ line-height:1.45; }
   transform-origin:left center;
 }
 html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
-
-/* All three are phone furniture. They ship in the server-rendered HTML and are
-   switched on by the rail media query below, so the prompt to swipe is on
-   screen from the first paint rather than a beat after the cards it names. */
-.gains__swipe{ display:none; }
-.gains__count{ display:none; }
-.gain__n{ display:none; }
-
-@media (max-width:700px){
-  .gain{ flex-direction:column; gap:.15rem; align-items:flex-start; }
-  .gain__d{ max-width:38ch; }
-  /* align-self:center centres the icon vertically beside the word while the
-     row is horizontal. Once the row becomes a column that same rule centres
-     it horizontally, stranding it mid-screen away from its own word. */
-  .gain__i{ align-self:flex-start; }
+.gains__count{
+  display:flex; gap:.28em; flex:none;
+  /* "01 / 06" is one expression, not a sentence: left to the page direction it
+     comes out as "06 / 01" in Arabic, which reads as the wrong card. */
+  direction:ltr;
+  font-family:var(--font-en); font-weight:600;
+  font-size:var(--t-xs); letter-spacing:.06em;
+  color:rgba(245,241,238,.78);
 }
-
-/* Fallback list when the pin is disabled (small screens / reduced motion).
-   `position:relative` rather than static: the chemistry field behind the stage
-   is absolutely positioned, and it has to resolve against — and be clipped by
-   — this box rather than escaping to the track. */
-.gains--flat .gains__track{ height:auto !important; }
-.gains--flat .gains__pin{ position:relative; height:auto; padding-block:1rem; }
-.gains--flat .gain{ opacity:1; }
-.gains--flat .gain__w{ color:var(--accent); }
-.gains--flat .gain__d{ opacity:1; transform:none; }
-/* Nothing to be a progress bar OF, until the rail below turns it back on. */
-.gains--flat .gains__foot{ display:none; }
-
-/* ---------------------------------------------------------------------------
-   THE PHONE RAIL
-
-   Six full-width rows stacked vertically bury the last of them, so on a phone
-   the rows become cards on one horizontal scroller. Everything below exists so
-   that nobody has to DISCOVER the gesture:
-
-     · the list is pulled full-bleed out of .shell, so the next card is cut in
-       half by the screen edge — the plainest possible statement that the row
-       carries on past the fold;
-     · a line of copy names the gesture outright, and retires itself once the
-       visitor has swiped;
-     · the same rule the pinned version fills, fills here too;
-     · a counter says which card this is, out of how many.
-
-   The breakpoint matches RAIL_MQ in Gains.tsx. Layout is CSS, so the first
-   paint on a phone is already horizontal with no flash of the stacked list;
-   the JS only supplies progress.
-   --------------------------------------------------------------------------- */
-@keyframes swipe-nudge{
-  0%,100%{ transform:translateX(0); }
-  45%{ transform:translateX(calc(var(--dir) * 7px)); }
-}
-
-@media (max-width:767px){
-  .gains--flat .gains__swipe{
-    display:flex; align-items:center; gap:.5rem;
-    font-size:var(--t-xs); line-height:1.5;
-    color:rgba(245,241,238,.72);
-    margin-bottom:.85rem;
-    transition:opacity .5s var(--ease);
-  }
-  /* Fades rather than unmounts: pulling it out of the flow would shift the
-     rail up under the finger that just swiped it. */
-  .gains--flat .gains__swipe.is-done{ opacity:0; }
-  .gains__swipe-arrow{
-    display:inline-flex; flex:none; color:var(--accent);
-    animation:swipe-nudge 1.7s var(--ease) infinite;
-  }
-
-  .gains--flat .gainlist{
-    display:flex; gap:.85rem;
-    overflow-x:auto; overscroll-behavior-x:contain;
-    scroll-snap-type:x mandatory;
-    scroll-padding-inline:var(--gutter);
-    /* Full-bleed: cancel .shell's gutter, then re-apply it as padding. The
-       cards still rest on the heading's margin, but they are cut by the SCREEN
-       edge instead of by a container — and that cut is the affordance. */
-    margin-inline:calc(var(--gutter) * -1);
-    padding-inline:var(--gutter);
-    padding-block:.2rem 1rem;
-    /* The custom rule below reports position better than a hairline scrollbar
-       that most phones never paint in the first place. */
-    scrollbar-width:none;
-  }
-  .gains--flat .gainlist::-webkit-scrollbar{ display:none; }
-
-  .gains--flat .gain{
-    position:relative;
-    /* min-width:0 matters: without it a card whose word is wider than its
-       basis is floored at min-content, and one long word (COMMUNICATE) would
-       make a single card wider than all the others. */
-    flex:0 0 74%; min-width:0; max-width:300px;
-    scroll-snap-align:start;
-    flex-direction:column; align-items:flex-start; gap:.45rem;
-    padding:1.15rem 1.05rem 1.35rem;
-    border:1px solid rgba(245,241,238,.16); border-radius:var(--r-md);
-    background:rgba(245,241,238,.045);
-    transition:border-color .35s var(--ease), background-color .35s var(--ease);
-  }
-  .gains--flat .gain.on{
-    border-color:rgba(139,203,50,.45);
-    background:rgba(139,203,50,.07);
-  }
-  .gains--flat .gain__i{ font-size:1.5rem; align-self:flex-start; }
-  /* Sized to clear the longest word — COMMUNICATE — inside the narrowest card
-     a 320px phone can produce, with room left over. */
-  .gains--flat .gain__w{ font-size:clamp(1.4rem,6.4vw,2.1rem); max-width:100%; }
-  .gains--flat .gain__d{ max-width:none; }
-
-  .gain__n{
-    display:block; position:absolute;
-    inset-block-start:.9rem; inset-inline-end:1rem;
-    font-family:var(--font-en); font-weight:600;
-    font-size:.7rem; letter-spacing:.14em; line-height:1;
-    color:rgba(245,241,238,.38);
-    transition:color .35s var(--ease);
-  }
-  .gain.on .gain__n{ color:var(--accent); }
-
-  .gains--flat .gains__foot{ display:flex; }
-  .gains__count{
-    display:flex; gap:.28em; flex:none;
-    /* "01 / 06" is one expression, not a sentence: left to the page direction
-       it comes out as "06 / 01" in Arabic, which reads as the wrong card. */
-    direction:ltr;
-    font-family:var(--font-en); font-weight:600;
-    font-size:var(--t-xs); letter-spacing:.06em;
-    color:rgba(245,241,238,.78);
-  }
-  .gains__count i{ font-style:normal; color:rgba(245,241,238,.38); }
-}
+.gains__count i{ font-style:normal; color:rgba(245,241,238,.38); }
 
 /* ===========================================================================
    PROGRAMME

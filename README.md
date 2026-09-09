@@ -37,9 +37,8 @@ one array — no CMS, no database, no admin panel, no deploy pipeline to learn.
   (English, LTR), sharing one component tree.
 - **Dual Hijri/Gregorian dates** everywhere a date appears, with the numerals
   bidi-isolated so a right-to-left page cannot reverse them.
-- **A pinned "what you gain" section** on desktop, which becomes a swipeable
-  card rail on phones — same content, same progress vocabulary, different
-  gesture.
+- **A "what you gain" card rail** — six cards on one horizontal scroller, the
+  same at every width, with a fill rule and a counter reporting progress.
 - **An animated chemistry background** (benzene rings, gears, charged bonds,
   Bohr atoms) authored twice, once for landscape screens and once for portrait.
 - **Pointer-reactive motion** — hero parallax, card tilt, gallery drift, button
@@ -62,7 +61,7 @@ one array — no CMS, no database, no admin panel, no deploy pipeline to learn.
 | UI | **React 19** | Server Components by default; `'use client'` only where motion needs it |
 | Language | **TypeScript 5.5**, `strict: true` | Content in `data/` is typed, so a malformed entry fails the build |
 | Styling | **Handwritten CSS** in `app/globals.css` | Tailwind is installed for its Preflight reset only — see below |
-| Animation | **GSAP 3.12** + ScrollTrigger | Dynamically imported by the one section that uses it |
+| Animation | **CSS transitions + one shared rAF loop** | No animation library; see `components/PointerMotion.tsx` |
 | Fonts | **next/font** | Space Grotesk + IBM Plex Sans Arabic, self-hosted at build time |
 | Build | PostCSS + Autoprefixer | |
 | Hosting | Vercel (or any static host) | No backend, no database, no environment variables |
@@ -135,13 +134,14 @@ React state, so Server and Client Components can both import it. Adding
 `'use client'` there would make `pick()` unusable from the server components
 that render most of the page.
 
-**The GAINS section is pinned with `position: sticky`, not GSAP's pin.** GSAP's
-pin injects measured heights into the layout, and any viewport resize while
-pinned makes the section slip. Sticky lets the browser recompute for itself;
-ScrollTrigger is left with one job — reading scroll progress — which cannot
-desync anything. If GSAP fails to load, the viewport is narrow, or reduced
-motion is requested, the section degrades to a plain list with identical
-content.
+**The GAINS section is one horizontal scroller, at every width.** It used to be
+two presentations — a `position: sticky` stage on desktop whose progress GSAP's
+ScrollTrigger read, and this rail on phones — which cost a lazy GSAP import, a
+measured track height, a breakpoint the CSS and the JS each had to be told
+about, and a fallback for when any of it failed. The rail does the same job
+everywhere, so all of that is gone and so is GSAP: it was the only thing on the
+site that used it. Layout is CSS, so the first paint is already correct; the JS
+only reports scroll progress.
 
 ## Project Structure
 
@@ -171,7 +171,7 @@ aiche-kku/
 │   ├── Hero.tsx               masked word-by-word headline
 │   ├── About.tsx              sticky summary + four scrolling beats
 │   ├── Targets.tsx            the five figures
-│   ├── Gains.tsx              pinned stage / phone rail                 [client]
+│   ├── Gains.tsx              horizontal card rail                     [client]
 │   ├── Journey.tsx            milestone timeline
 │   ├── Gallery.tsx            curated photo grid
 │   ├── Team.tsx               supervisor, leadership, committee heads   [client]
@@ -247,10 +247,10 @@ aiche-kku/
    `requestAnimationFrame` loop for everything that follows the pointer
    globally, and per-element listeners for everything that needs
    element-relative coordinates. `Reveal` shares a single
-   `IntersectionObserver` across every entering element on the page. `Gains`
-   dynamically imports GSAP only on a wide, motion-permitting viewport.
-7. **Every one of these degrades.** Reduced motion, a narrow viewport or a
-   failed GSAP chunk each fall back to fully readable static content.
+   `IntersectionObserver` across every entering element on the page.
+7. **Every one of these degrades.** Reduced motion falls back to fully
+   readable static content, and every layout is CSS-first, so nothing waits
+   on JavaScript to become legible.
 
 ## Installation
 
@@ -493,9 +493,9 @@ compact one-line-per-rule style.
 
 **Comments explain WHY.** The existing comments are unusually dense for a
 project this size, and that is deliberate: nearly all of them record a decision
-or a trap (why sticky and not GSAP's pin, why the Hijri suffix sits outside
-`<Num>`, why `minmax(0,1fr)` and not `1fr`). Add that kind. Do not add comments
-that restate the code.
+or a trap (why the prefixed backdrop-filter needs its own `@supports` block,
+why the Hijri suffix sits outside `<Num>`, why `minmax(0,1fr)` and not `1fr`).
+Add that kind. Do not add comments that restate the code.
 
 ### Naming conventions
 
@@ -561,9 +561,8 @@ npm run build
 
 Then check both languages by hand — `/` and `/en` — because RTL is where this
 project's bugs live. In particular verify that numerals read in the right order,
-that the mobile menu opens and closes, and that the GAINS section works both
-pinned (desktop) and swiped (phone). A device-emulator pass at 390px wide
-catches most of it.
+that the mobile menu opens and closes, and that the GAINS rail scrolls and
+reports progress. A device-emulator pass at 390px wide catches most of it.
 
 ## Troubleshooting
 
@@ -582,9 +581,9 @@ scans. An interpolated name like `` `chem--${variant}` `` is invisible to that
 scan and the rule is dropped from the build with no error. See `VARIANT_CLASS`
 in `ChemField.tsx` for the pattern to follow.
 
-**The GAINS section shows a plain list instead of the pinned stage.** Expected
-on a viewport under 768px, under reduced motion, or if the GSAP chunk fails to
-load. All three are designed fallbacks, not bugs.
+**The GAINS cards do not scroll sideways.** The rail is a plain overflow-x
+scroller with `scroll-snap-type`, so check that `.gainlist` still has its
+`overflow-x:auto` and that nothing above it clips the row.
 
 **The chemistry background is invisible on a phone.** The field is two canvases
 — wide and tall — and CSS shows exactly one. Check the `@media (max-width:767px)`

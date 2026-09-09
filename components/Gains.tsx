@@ -10,33 +10,24 @@ import Num from './Num';
 /**
  * "What you gain" — the most important section on the site.
  *
- * It has two completely different presentations, and both are deliberate.
+ * One presentation everywhere: six cards on a horizontal scroller.
  *
- * DESKTOP — a pinned stage. Pinning is done by `position: sticky`, NOT by
- * GSAP. GSAP's own pin injects measured heights into the layout, and any
- * viewport resize while pinned makes the section slip. Sticky lets the browser
- * recompute for itself, and ScrollTrigger is used only to read progress, which
- * cannot desync anything.
+ * It used to be two. Desktop got a stage pinned with `position: sticky` whose
+ * progress GSAP's ScrollTrigger read, and phones got this rail, because six
+ * full-width rows stacked vertically bury the last of them. Carrying both meant
+ * a lazy GSAP import, a measured track height, a breakpoint the CSS and the JS
+ * each had to be told about separately, and a fallback for when any of that
+ * failed. The rail does the same job at every width, so the pin is gone and so
+ * is GSAP — it was the only thing on the site that used it.
  *
- * GSAP is loaded on demand because this is the only section that needs it.
- * If the import fails, or the viewport is narrow, or the visitor asked for
- * reduced motion, the section falls back to `flat` — never a blank panel.
+ * Everything about the rail is built to say "move me" before anyone has to
+ * guess: the next card is cut by the container edge, a rule fills as you go, a
+ * counter says how many are left, and on touch a line of copy names the gesture
+ * outright and retires itself once it has been used.
  *
- * PHONE — a horizontal rail. Below 768px the pin is disabled outright: mobile
- * browser chrome grows and shrinks during scroll, and anything pinned visibly
- * jumps as it does. Six full-width rows stacked vertically also bury the last
- * of them, so the rows become swipeable cards instead. Everything about that
- * rail is built to say "move me" before the visitor has to guess: the next
- * card is cut in half by the screen edge, a line of copy names the gesture, a
- * rule fills as you go and a counter says how many are left.
- *
- * The two are kept honest by sharing one breakpoint. CSS owns the rail layout
- * (so the first paint on a phone is already horizontal, with no flash of the
- * stacked list), and the matchMedia below only decides whether the progress
- * JS should run at all.
+ * Layout is CSS, so the first paint is already horizontal. The JS below only
+ * reports progress.
  */
-
-const RAIL_MQ = '(max-width: 767px)';
 
 interface Gain {
   word: string;
@@ -44,11 +35,6 @@ interface Gain {
   descAr: string;
   descEn: string;
 }
-
-type GsapMods = {
-  gsap: (typeof import('gsap'))['gsap'];
-  ScrollTrigger: (typeof import('gsap/ScrollTrigger'))['ScrollTrigger'];
-};
 
 const GAINS: Gain[] = [
   {
@@ -93,128 +79,13 @@ const GAINS: Gain[] = [
 const pad = (n: number) => String(n).padStart(2, '0');
 
 export default function Gains({ lang }: { lang: Lang }) {
-  const sectionRef = useRef<HTMLElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const barRef = useRef<HTMLElement>(null);
-  const gsapRef = useRef<GsapMods | null>(null);
-  const [flat, setFlat] = useState(true); // safe default: readable list
-  const [narrow, setNarrow] = useState(false);
   const [swiped, setSwiped] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  /** The rail is the phone presentation: narrow AND unpinned. */
-  const rail = flat && narrow;
-
-  /**
-   * Decide whether this visitor gets the pin at all, and load GSAP if so.
-   *
-   * Keyed to RAIL_MQ rather than a one-off `innerWidth` read, and re-run when
-   * that query flips. Read once at mount, the two halves of the breakpoint
-   * drifted apart the moment a desktop window was dragged across it: `narrow`
-   * tracked the query live while `flat` never moved again, so narrowing left
-   * `flat === false` and the pinned stage running at phone width, and widening
-   * from a narrow start left the flat list on a desktop with GSAP never loaded.
-   *
-   * Going back to flat is safe to do at any time: `.gains--flat .gains__track`
-   * forces `height:auto !important`, which outranks the inline height the
-   * measuring effect wrote, and that effect reverts its own ScrollTrigger on
-   * cleanup.
-   */
+  /** Progress along the rail, for the fill and the counter. */
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    const mq = window.matchMedia(RAIL_MQ);
-    let cancelled = false;
-
-    const decide = async () => {
-      // Narrow: the rail owns this width, so drop the pin and keep GSAP
-      // unloaded. Whatever was already loaded stays in the ref for the way back.
-      if (mq.matches) {
-        setFlat(true);
-        return;
-      }
-      if (gsapRef.current) {
-        setFlat(false);
-        return;
-      }
-      try {
-        const [{ gsap }, { ScrollTrigger }] = await Promise.all([
-          import('gsap'),
-          import('gsap/ScrollTrigger'),
-        ]);
-        if (cancelled || mq.matches) return;
-
-        gsap.registerPlugin(ScrollTrigger);
-        gsapRef.current = { gsap, ScrollTrigger };
-        setFlat(false);
-      } catch {
-        // GSAP ships in the bundle, so this only fires if its chunk fails to
-        // arrive (a dropped connection mid-load). The flat list stays.
-      }
-    };
-
-    decide();
-    mq.addEventListener('change', decide);
-    return () => {
-      cancelled = true;
-      mq.removeEventListener('change', decide);
-    };
-  }, []);
-
-  // Same breakpoint the rail CSS uses, so the two can never disagree.
-  useEffect(() => {
-    const mq = window.matchMedia(RAIL_MQ);
-    const apply = () => setNarrow(mq.matches);
-    apply();
-    mq.addEventListener('change', apply);
-    return () => mq.removeEventListener('change', apply);
-  }, []);
-
-  /**
-   * Measuring lives in its own effect, keyed on `flat`, and that key is the
-   * whole point: while the section is still flat, `.gains--flat .gains__track`
-   * forces `height:auto !important`, which outranks any inline height. Measure
-   * before React has committed `flat === false` and ScrollTrigger caches a
-   * track roughly as tall as the viewport — progress then runs out in the first
-   * screen, the highlight jumps to the last row and freezes, and sticky carries
-   * on holding the section for the real distance. An effect on [flat] runs
-   * after that commit, so what it measures is what the visitor scrolls through.
-   */
-  useEffect(() => {
-    if (flat) return;
-
-    const mods = gsapRef.current;
-    const track = trackRef.current;
-    if (!mods || !track) return;
-
-    // Track height is what decides how long the pin lasts.
-    track.style.height = `${GAINS.length * 58}vh`;
-
-    const ctx = mods.gsap.context(() => {
-      mods.ScrollTrigger.create({
-        trigger: track,
-        start: 'top top',
-        end: 'bottom bottom',
-        onUpdate: (self) => {
-          const p = self.progress;
-          if (barRef.current) barRef.current.style.transform = `scaleX(${p})`;
-          setActiveIndex(Math.min(GAINS.length - 1, Math.floor(p * GAINS.length)));
-        },
-      });
-    }, sectionRef.current ?? undefined);
-
-    return () => ctx.revert();
-  }, [flat]);
-
-  /**
-   * The rail's own progress. It drives exactly the same rule and the same
-   * active row as the pin does — the visitor gets one vocabulary on both
-   * presentations, just moved by a different gesture.
-   */
-  useEffect(() => {
-    if (!rail) return;
-
     const list = listRef.current;
     if (!list) return;
 
@@ -227,26 +98,21 @@ export default function Gains({ lang }: { lang: Lang }) {
 
       if (barRef.current) barRef.current.style.transform = `scaleX(${p})`;
       setActiveIndex(Math.round(p * (GAINS.length - 1)));
-      // One real swipe is enough: the prompt has done its job, so retire it.
+      // One real move is enough: the prompt has done its job, so retire it.
       if (travelled > 8) setSwiped(true);
     };
 
     onScroll();
     list.addEventListener('scroll', onScroll, { passive: true });
     return () => list.removeEventListener('scroll', onScroll);
-  }, [rail]);
+  }, []);
 
   return (
-    <section
-      ref={sectionRef}
-      className={`gains${flat ? ' gains--flat' : ''}`}
-      id="gains"
-    >
-      <div className="gains__track" ref={trackRef}>
-        <div className="gains__pin">
-          {/* Behind the type for the whole length of the pin, and behind the
-              rail on a phone: the same molecular field the hero opens with. */}
-          <ChemField variant="gains" />
+    <section className="gains" id="gains">
+      {/* The positioned box the chemistry field resolves against and is
+          clipped by -- without it the field escapes the section. */}
+      <div className="gains__body">
+        <ChemField variant="gains" />
 
           <div className="shell gains__stage">
             <div className="sect__head">
@@ -265,10 +131,10 @@ export default function Gains({ lang }: { lang: Lang }) {
               </p>
             </div>
 
-            {/* Phone only, and hidden by CSS everywhere else. It ships in the
-                server-rendered HTML rather than waiting on `rail`, so the
-                prompt is on screen from the first paint instead of appearing a
-                beat after the cards it describes. */}
+            {/* Touch only -- "swipe" means nothing to a mouse, so CSS hides it
+                under (hover:hover). It ships in the server-rendered HTML so the
+                prompt is on screen from the first paint rather than a beat after
+                the cards it describes. */}
             <p className={`gains__swipe${swiped ? ' is-done' : ''}`} aria-hidden="true">
               <i className="gains__swipe-arrow">
                 <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
@@ -294,7 +160,7 @@ export default function Gains({ lang }: { lang: Lang }) {
             <ul className="gainlist" ref={listRef}>
               {GAINS.map((g, i) => (
                 <li
-                  className={`gain${(!flat || rail) && i === activeIndex ? ' on' : ''}`}
+                  className={`gain${i === activeIndex ? ' on' : ''}`}
                   key={g.word}
                 >
                   <span className="gain__n" aria-hidden="true">
@@ -327,7 +193,6 @@ export default function Gains({ lang }: { lang: Lang }) {
                 <Num>{pad(GAINS.length)}</Num>
               </span>
             </div>
-          </div>
         </div>
       </div>
     </section>
