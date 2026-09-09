@@ -162,16 +162,20 @@ export const committees: Member[] = [
     links: {},
   },
   {
-    id: 'media',
-    soon: true,
-    nameAr: 'لجنة الإعلام والمحتوى',
-    nameEn: 'Media & Content',
-    roleAr: 'قريبًا',
-    roleEn: 'Coming soon',
-    majorAr: '',
-    majorEn: '',
-    photo: null,
-    links: {},
+    id: 'rama',
+    nameAr: 'راما محمد الحفظي',
+    nameEn: 'Rama Alhefdi',
+    roleAr: 'لجنة الإعلام والمحتوى',
+    roleEn: 'Media & Content',
+    majorAr: 'علوم حاسب',
+    majorEn: 'Computer Science',
+    bioAr:
+      'طالبة علوم حاسب، مهتمة بمجال البرمجة والتقنية، التصميم والإبداع. أؤمن بأن التصميم هو الجسر بين الفكرة والتجربة، وأسعى للجمع بين الحس الفني والمهارات التقنية لتقديم مخرجات بصرية تسهم في إبراز أنشطة وهوية الفريق بشكل متميز.',
+    // TODO review: English drafted from the Arabic, not author-supplied.
+    bioEn:
+      "A computer science student drawn to programming, technology, design and creativity. I believe design is the bridge between an idea and the experience of it, and I work to bring an artistic eye and technical skill together to produce visual work that carries the team's activities and identity well.",
+    photo: '/team/rama.jpg',
+    links: { linkedin: 'https://www.linkedin.com/in/rama-alhefdi-23bb39220' },
   },
   {
     id: 'yazan',
