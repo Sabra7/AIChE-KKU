@@ -28,12 +28,15 @@ function MemberCard({
   lang,
   open,
   onToggle,
+  pointer,
 }: {
   member: Member;
   lang: Lang;
   open: boolean;
   /** Pass a member id to open it, or null to close whatever is open. */
   onToggle: (id: string | null) => void;
+  /** True once the visitor is known to have a hovering, fine pointer. */
+  pointer: boolean;
 }) {
   if (member.soon) {
     return (
@@ -62,7 +65,22 @@ function MemberCard({
         scrolled in. So the bio moved out, and the frame went back to being an
         aspect-ratio box with a single source of truth for its height.
       */}
-      <div className="card__ph">
+      {/*
+        tabIndex only where the frame actually reveals something -- a bio, on a
+        pointer. Anywhere else it stays inert, so no card ever contributes a
+        tab stop that leads nowhere.
+
+        role="group" with the name on it, because a bare focusable div is
+        announced as nothing at all. Focus lands on something named, and the
+        bio inside it is read out -- which on a pointer is the only reading of
+        the bio there is, since the panel that used to carry it is display:none.
+      */}
+      <div
+        className="card__ph"
+        tabIndex={bio && pointer ? 0 : undefined}
+        role={bio && pointer ? 'group' : undefined}
+        aria-label={bio && pointer ? name : undefined}
+      >
         {member.photo ? (
           <Image
             src={member.photo}
@@ -176,6 +194,30 @@ export default function Team({ lang }: { lang: Lang }) {
   const [openBio, setOpenBio] = useState<string | null>(null);
 
   /**
+   * Whether this visitor is the one the hover reveal is built for.
+   *
+   * It decides a single thing: whether the photo frame is a tab stop. The
+   * reveal is the only way to read a bio on a pointer, so the frame has to be
+   * focusable there or a keyboard cannot reach it at all. On touch the frame
+   * reveals nothing -- the veil and the text are display:none -- and the panel
+   * button below is already the control, so a tab stop there would be a stop
+   * that does nothing.
+   *
+   * It starts false so the server and the first client render agree, and a
+   * listener rather than a one-off read because the answer can change under a
+   * tablet that gets a keyboard, or a laptop folded into a slate.
+   */
+  const [pointer, setPointer] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const sync = () => setPointer(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
+  /**
    * Tap anywhere outside the open card to close its bio.
    *
    * `pointerdown` rather than `click` so this settles before a tap on another
@@ -256,6 +298,7 @@ export default function Team({ lang }: { lang: Lang }) {
                 lang={lang}
                 open={openBio === m.id}
                 onToggle={setOpenBio}
+                pointer={pointer}
               />
             ))}
           </div>
@@ -273,6 +316,7 @@ export default function Team({ lang }: { lang: Lang }) {
                 lang={lang}
                 open={openBio === m.id}
                 onToggle={setOpenBio}
+                pointer={pointer}
               />
             ))}
           </div>
