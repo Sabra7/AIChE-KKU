@@ -1070,6 +1070,76 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
   .card__sheen{ display:block; }
   .card:hover .card__sheen{ opacity:1; }
 }
+
+/* THE HOVER REVEAL  —  pointer devices only, and gone everywhere else.
+
+   This is the pre-402267f overlay brought back for the mouse: the photo blurs,
+   a veil rises over it, and the bio reads on top. What is NOT brought back is
+   the reason it left. It cost a phone three full-size painted children per
+   card that nothing there could ever reveal, and it forced equalise() to
+   stretch every frame past its own aspect-ratio to fit the longest bio.
+
+   Both are avoided by the same line: display:none at rest. A touch device
+   never builds these boxes, so it carries no layers, and the frame stays a
+   plain aspect-ratio box on every device -- the overlay is inset:0 inside it,
+   so it takes the frame's height rather than setting it. .card__sheen has
+   worked this way all along; this follows it.
+
+   blur() is not animated frame by frame. It is one small static value that
+   transitions once off `none` -- a filter list interpolates from `none` as if
+   every function sat at its initial value, so there is no need for the
+   identity filter:blur(0px) that used to sit on the photo at rest. */
+.card__veil,
+.card__phBio{ display:none; }
+
+@media (hover:hover) and (pointer:fine){
+  /* visibility, not opacity alone: an opacity:0 overlay still keeps a render
+     layer and is still painted. It is delayed by the length of the fade so
+     the fade itself still plays out on the way out. */
+  .card__veil{
+    display:block;
+    position:absolute; inset:0;
+    background:rgba(251,249,247,.86);
+    opacity:0; visibility:hidden;
+    transition:opacity .4s var(--ease), visibility 0s linear .4s;
+  }
+  .card__phBio{
+    display:flex; align-items:center;
+    position:absolute; inset:0;
+    margin:0; padding:1.1rem;
+    font-size:var(--t-xs); line-height:1.7; color:var(--ink);
+    opacity:0; visibility:hidden; overflow:hidden;
+    transition:opacity .4s var(--ease), visibility 0s linear .4s;
+  }
+  .card__ph img{ transition:filter .4s var(--ease); }
+
+  .card:hover .card__ph img{ filter:blur(5px); }
+
+  .card:hover .card__veil,
+  .card:hover .card__phBio{
+    opacity:1; visibility:visible;
+    /* No delay on the way in, or the fade would play against a hidden box. */
+    transition:opacity .4s var(--ease), visibility 0s;
+  }
+
+  /* The panel goes entirely on a pointer -- button and all -- because the
+     overlay above already says the bio, and the box below was saying it a
+     second time. Touch never reaches this rule, so the panel stays exactly as
+     it was there: it is the only control a finger has.
+
+     Qualified by .card rather than left bare, because .card__bio's own
+     declarations sit FURTHER DOWN this file. At equal specificity the later
+     rule wins regardless of this one being inside a media query, so the panel
+     would have come back. One extra class settles it without depending on
+     source order.
+
+     The cost is that hover becomes the only way in on a desktop: with no
+     button there is nothing for the keyboard to land on, which is the same
+     hole the pre-402267f reveal had. .card.open is left unhandled here for
+     that reason -- on a pointer nothing can set it any more. */
+  .card .card__bio{ display:none; }
+}
+
 /* THE BIO  —  the supervisor card's idiom, shrunk to fit a member card: a
    bordered box with an accent edge on the inline-start. It sits under the
    card's text, outside the photo, and it is the whole reason the frame above

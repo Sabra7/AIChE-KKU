@@ -76,6 +76,22 @@ function MemberCard({
         )}
         {/* Specular highlight: follows the pointer via --sx/--sy, paint only. */}
         <span className="card__sheen" />
+
+        {/*
+          The pointer-only hover reveal: a veil and the bio, over a blurred
+          photo. Both are display:none until (hover:hover) and (pointer:fine),
+          so a touch device never puts them in the render tree at all -- which
+          is the one thing that made the old overlay expensive on a phone.
+
+          No aria-hidden on the text. It would look right -- the panel under
+          the card carries the same words -- but the two are never present at
+          once: display:none takes the panel on a pointer and this overlay on
+          touch, and display:none is already out of the accessibility tree. So
+          nothing would ever have been read twice, and hiding this copy as well
+          would leave a pointer with no reading of the bio at all.
+        */}
+        {bio && <span className="card__veil" aria-hidden="true" />}
+        {bio && <p className="card__phBio">{bio}</p>}
       </div>
 
       <h3>{name}</h3>
