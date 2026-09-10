@@ -22,8 +22,9 @@ import Num from './Num';
  *
  * Everything about the rail is built to say "move me" before anyone has to
  * guess: the next card is cut by the container edge, a rule fills as you go, a
- * counter says how many are left, and on touch a line of copy names the gesture
- * outright and retires itself once it has been used.
+ * counter says how many are left, a pair of arrows steps it a card at a time,
+ * and on touch a line of copy names the gesture outright and retires itself
+ * once it has been used.
  *
  * Layout is CSS, so the first paint is already horizontal. The JS below only
  * reports progress.
@@ -75,6 +76,26 @@ const GAINS: Gain[] = [
   },
 ];
 
+/**
+  * A chevron, named by which edge of the box it points AT rather than by left
+  * or right: the callers are direction-aware and would otherwise each have to
+  * repeat the same ternary.
+  */
+function Chevron({ points }: { points: 'start' | 'end' }) {
+  return (
+    <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+      <path
+        d={points === 'start' ? 'M10 2.5 4.5 8 10 13.5' : 'M6 2.5 11.5 8 6 13.5'}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 /** Two digits, so the counter never changes width as it counts. */
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -83,6 +104,10 @@ export default function Gains({ lang }: { lang: Lang }) {
   const barRef = useRef<HTMLElement>(null);
   const [swiped, setSwiped] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
+
+  const rtl = lang === 'ar';
 
   /** Progress along the rail, for the fill and the counter. */
   useEffect(() => {
@@ -98,6 +123,10 @@ export default function Gains({ lang }: { lang: Lang }) {
 
       if (barRef.current) barRef.current.style.transform = `scaleX(${p})`;
       setActiveIndex(Math.round(p * (GAINS.length - 1)));
+      // A pixel of slack: browsers land a snap a hair short of the extreme, and
+      // an arrow that stays lit at the end of the row reads as broken.
+      setAtStart(travelled <= 1);
+      setAtEnd(max <= 0 || travelled >= max - 1);
       // One real move is enough: the prompt has done its job, so retire it.
       if (travelled > 8) setSwiped(true);
     };
@@ -106,6 +135,32 @@ export default function Gains({ lang }: { lang: Lang }) {
     list.addEventListener('scroll', onScroll, { passive: true });
     return () => list.removeEventListener('scroll', onScroll);
   }, []);
+
+  /**
+   * Step one card. `dir` is logical -- 1 is the next card in reading order --
+   * and only the sign handed to scrollBy flips, because scrollLeft still runs
+   * physically: an RTL list moves toward negative as it advances.
+   *
+   * The distance is one card plus the gap, read off the live element rather
+   * than hard-coded, so the card's own responsive width stays the only place
+   * that number is written. Landing near a snap point lets scroll-snap finish
+   * the job exactly.
+   */
+  const step = (dir: 1 | -1) => {
+    const list = listRef.current;
+    if (!list) return;
+
+    const card = list.firstElementChild as HTMLElement | null;
+    const gap = parseFloat(getComputedStyle(list).columnGap) || 0;
+    const amount = card ? card.getBoundingClientRect().width + gap : list.clientWidth * 0.8;
+
+    list.scrollBy({
+      left: (rtl ? -dir : dir) * amount,
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'auto'
+        : 'smooth',
+    });
+  };
 
   return (
     <section className="gains" id="gains">
@@ -192,6 +247,31 @@ export default function Gains({ lang }: { lang: Lang }) {
                 <i>/</i>
                 <Num>{pad(GAINS.length)}</Num>
               </span>
+
+              {/*
+                DOM order is always [back, forward]. Flex mirrors it under RTL
+                on its own, and the glyphs below point in reading order, so
+                "forward" is the right-hand arrow in English and the left-hand
+                one in Arabic without either being special-cased here.
+              */}
+              <div className="gains__nav">
+                <button
+                  type="button"
+                  onClick={() => step(-1)}
+                  disabled={atStart}
+                  aria-label={pick(lang, 'البطاقة السابقة', 'Previous card')}
+                >
+                  <Chevron points={rtl ? 'end' : 'start'} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => step(1)}
+                  disabled={atEnd}
+                  aria-label={pick(lang, 'البطاقة التالية', 'Next card')}
+                >
+                  <Chevron points={rtl ? 'start' : 'end'} />
+                </button>
+              </div>
             </div>
         </div>
       </div>

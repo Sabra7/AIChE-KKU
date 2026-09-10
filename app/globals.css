@@ -905,6 +905,34 @@ html[dir="rtl"] .gains__rule i{ transform-origin:right center; }
 }
 .gains__count i{ font-style:normal; color:rgba(245,241,238,.38); }
 
+/* Stepper. The rail was swipe-or-nothing, which is fine on a phone and no
+   affordance at all behind a mouse: a horizontal scroller with no visible
+   scrollbar leaves a pointer visitor holding shift and guessing. These give
+   both devices something to press.
+
+   No mirroring rules here. DOM order is [back, forward], flex reverses it under
+   RTL by itself, and the glyphs are chosen in the component by reading order. */
+.gains__nav{ display:flex; gap:.4rem; flex:none; }
+.gains__nav button{
+  display:inline-flex; align-items:center; justify-content:center;
+  /* 44px, the same target every other control on the site keeps. */
+  width:44px; height:44px; padding:0;
+  border:1px solid rgba(245,241,238,.22); border-radius:999px;
+  background:none; color:var(--bg); cursor:pointer;
+  transition:border-color .25s var(--ease), background-color .25s var(--ease),
+             color .25s var(--ease), opacity .25s var(--ease);
+}
+/* Dimmed rather than hidden: a control that vanishes at the end of the row
+   moves the two beside it, and the counter jumps with them. */
+.gains__nav button:disabled{ opacity:.26; cursor:default; }
+@media (hover:hover){
+  .gains__nav button:not(:disabled):hover{
+    border-color:var(--accent); color:var(--accent);
+    background:rgba(139,203,50,.1);
+  }
+}
+.gains__nav button:not(:disabled):active{ background:rgba(139,203,50,.18); }
+
 /* ===========================================================================
    PROGRAMME
    =========================================================================== */
